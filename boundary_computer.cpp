@@ -33,9 +33,8 @@ BoundaryComputer::SaveAllResults(const char *filename)
 }
 
 void
-BoundaryComputer::Compute(bool statisticsOnCerr, int computeOnlyCodim)
+BoundaryComputer::Compute(bool statisticsOnCerr, int computeOnlyCodim, GraphPrinter &printer)
 {
-  LaTeXGraphPrinter printer(stdout, G, M);
   statistics.assign(3*G-3+M+1, 0);
 
   printer.BeginPrint();
@@ -122,15 +121,15 @@ BoundaryComputer::Compute(bool statisticsOnCerr, int computeOnlyCodim)
 }
 
 void
-BoundaryComputer::Compute(bool statisticsOnCerr)
+BoundaryComputer::Compute(bool statisticsOnCerr, GraphPrinter &printer)
 {
-  Compute(statisticsOnCerr, -1);
+  Compute(statisticsOnCerr, -1, printer);
 }
 
 void
-BoundaryComputer::Compute()
+BoundaryComputer::Compute(GraphPrinter &printer)
 {
-  Compute(true, -1);
+  Compute(true, -1, printer);
 }
 
 void

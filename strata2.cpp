@@ -19,22 +19,31 @@
 
 using namespace std;
 
-int ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim);
+
+enum Printer { LaTeX, Text };
+
+int ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printer &printer);
 void PrintCompilationFlags(void);
+void QuitWithUsage(char* name);
 
 int
 main(int argc, char* argv[])
 {
   int g, n, codim;
   int ret;
-
-  ret = ParseCommandLine(argc, argv, g, n, codim);
-  if (ret) return ret;
+  enum Printer printer;
+    
+  ParseCommandLine(argc, argv, g, n, codim, printer);
   
   PrintCompilationFlags();
 
   BoundaryComputer c(g, n);
-  c.Compute(true, codim);
+  GraphPrinter* P;
+  if (printer == LaTeX)
+    P = new LaTeXGraphPrinter(stdout, g, n);
+  else if (printer == Text)
+    P = new TextGraphPrinter(stdout, g, n);
+  c.Compute(true, codim, *P);
 
   // And some statistics.
   c.Statistics(stderr);
@@ -42,21 +51,68 @@ main(int argc, char* argv[])
   return 0;
 }
 
+void
+QuitWithUsage(char* name)
+{
+  fprintf(stderr, "Usage:\n\t%s [-L|-T] [-c C] genus [marked_points]\n", name);
+  fprintf(stderr, "\t\t-L: print graphs in LaTeX (default)\n");
+  fprintf(stderr, "\t\t-T: print graphs in text format\n");
+  fprintf(stderr, "\t\t-cC: print only graphs with C edges\n");
+  exit(1);
+}
+
 int
-ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim)
+ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printer &printer)
 {
   // Check command line arguments
   codim = -1;
   if (argc < 3)
+    QuitWithUsage(argv[0]);
+  else
     {
-      printf("Usage:\n\t%s genus marked_points\n", argv[0]);
-      return 1;
+      bool def_g = false, def_n = false;
+      printer = LaTeX; // default
+      n = 0; // default
+      for (int i = 1; i < argc; ++i)
+        {
+          if (argv[i][0] == '-')
+            {
+              if (argv[i][1] == '\0' || argv[i][2] != '\0')
+                QuitWithUsage(argv[0]);
+              else if (argv[i][1] == 'c')
+                {
+                  if (i+1 >= argc)
+                    QuitWithUsage(argv[0]);
+                  else
+                    {
+                      codim = atoi(argv[i+1]);
+                      ++i;
+                    }
+                }
+              else if (argv[i][1] == 'L')
+                printer = LaTeX;
+              else if (argv[i][1] == 'T')
+                printer = Text;
+              else
+                QuitWithUsage(argv[0]);
+            }
+          else
+            {
+              if (!def_g)
+                {
+                  def_g = true;
+                  g = atoi(argv[i]);
+                }
+              else if (!def_n)
+                {
+                  def_n = true;
+                  n = atoi(argv[i]);
+                }
+              else
+                QuitWithUsage(argv[0]);
+            }
+        }
     }
-  else if (argc == 4)
-    codim = atoi(argv[3]);
-  
-  g = atoi(argv[1]);
-  n = atoi(argv[2]);
 
   if (2*g-3+n < 0)
     {

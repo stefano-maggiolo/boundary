@@ -2,7 +2,8 @@
 #define BOUNDARY_COMPUTER_H
 
 #include "graph.h"
-#include "latex_graph_printer.h"
+#include "graph_printer.h"
+
 #include <map>
 #include <vector>
 #include <algorithm>
@@ -18,9 +19,9 @@ class BoundaryComputer
   vector< Graph >& GetAllResults(void);
   map< int, vector< Graph > >& GetAllResultsByCodimension(void);
   void SaveAllResults(const char *filename);
-  void Compute(bool statisticsOnCerr, int computeOnlyCodim);
-  void Compute(bool statisticsOnCerr);
-  void Compute();
+  void Compute(bool statisticsOnCerr, int computeOnlyCodim, GraphPrinter &printer);
+  void Compute(bool statisticsOnCerr, GraphPrinter &printer);
+  void Compute(GraphPrinter &printer);
   void Statistics(FILE* file, int printOnlyCodim);
   void Statistics(FILE* file);
   

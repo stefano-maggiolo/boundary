@@ -3,6 +3,8 @@
 
 #include "graph.h"
 #include "boundary_computer.h"
+#include "graph_printer.h"
 #include "latex_graph_printer.h"
+#include "text_graph_printer.h"
 
 #endif
