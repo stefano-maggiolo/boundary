@@ -30,6 +30,20 @@ Graph::print_matrix_sorted(void) const
 }
 #endif
 
+#ifdef USE_NAUTY
+void
+Graph::print_matrix_simple(void) const
+{
+  for (int i = 0; i < aSimple.size(); i++)
+    {
+      fprintf(stderr, "    ");
+      for (int j = 0; j < aSimple[i].size(); j++)
+        fprintf(stderr, "%d ", aSimple[i][j]);
+      fprintf(stderr, "\n");
+    }
+}
+#endif
+
 void
 Graph::normal_print(void) const
 {
@@ -145,6 +159,10 @@ Graph::Graph(const Graph& graph)
   laMatrix = graph.laMatrix;
   eigenvalues = graph.eigenvalues;
 #endif
+#ifdef USE_NAUTY
+  aSimple = graph.aSimple;
+  partitions = graph.partitions;
+#endif
 }
 
 void
@@ -235,7 +253,9 @@ Graph::Equal(Graph& g2)
     }
 #endif
   */
-
+#ifdef USE_NAUTY
+  return EqualNauty(g2);
+#endif
 #ifdef START_LAPACK_COMPUTATION
   if (K < START_LAPACK_COMPUTATION) return EqualPermutations(g2);
   else return EqualLapack(g2);
@@ -376,6 +396,157 @@ Graph::PermutationOk(Graph& g2, vector< int >& perm)
 }
 #endif
 
+#ifdef USE_NAUTY
+void
+Graph::ComputeDreadnaut(void)
+{
+  vector< int > translate(K, -1);
+  vector< vector< int > > translateEdges(K, vector< int >(K, -1));
+  
+  int maxg=0, maxm=0, maxl=0, maxa=0;
+  int simpleK = 0;
+  int npart;
+  
+  for (int i = 0; i < K; ++i)
+    {
+      if (maxg < g[i]) maxg = g[i];
+      if (maxm < m[i]) maxm = m[i];
+      if (maxl < l[i]) maxl = l[i];
+      for (int j = i+1; j < K; ++j)
+        if (maxa < a[i][j]) maxa = a[i][j];
+    }
+  // Resulting simple graph of simpleK >= (maxg+1)(maxm+1)(maxa+1) +
+  // maxa-2 and that number of partitions
+  npart = (maxg+1)*(maxm+1)*(maxl+1) + (maxa-1);
+
+  partitions.assign(1, -1);
+  // Build translation table for vertices and edges
+  for (int ig = 0; ig <= maxg; ++ig)
+    for (int im = 0; im <= maxm; ++im)
+      for (int il = 0; il <= maxl; ++il)
+        {
+          bool found = false;
+          for (int i = 0; i < K; ++i)
+            if (g[i] == ig && m[i] == im && l[i] == il)
+              {
+                found = true;
+                translate[i] = simpleK;
+                ++simpleK;
+              }
+          // Add a fake vertex to preserve colouring
+          if (!found) ++simpleK;
+          partitions.push_back(simpleK-1);
+        }
+  for (int ia = 2; ia <= maxa; ++ia)
+    {
+      bool found = false;
+      for (int i = 0; i < K; ++i)
+        for (int j = i+1; j < K; ++j)
+          if (ia == a[i][j])
+            {
+              found = true;
+              translateEdges[i][j] = simpleK;
+              ++simpleK;
+            }
+      if (!found) ++simpleK;
+      partitions.push_back(simpleK-1);
+    }
+  aSimple.assign(simpleK, vector< int >(simpleK, 0));
+  
+  for (int i = 0; i < K; ++i)
+    for (int j = i+1; j < K; ++j)
+      if (a[i][j] == 1)
+        {
+          aSimple[translate[i]][translate[j]] = 1;
+          aSimple[translate[j]][translate[i]] = 1;
+        }
+      else if (a[i][j] > 1)
+        {
+          aSimple[translate[i]][translateEdges[i][j]] = 1;
+          aSimple[translateEdges[i][j]][translate[i]] = 1;
+          
+          aSimple[translate[j]][translateEdges[i][j]] = 1;
+          aSimple[translateEdges[i][j]][translate[j]] = 1;
+        }
+}
+
+bool
+Graph::aresame(graph* g1, graph* g2, int n_n, int n_m)
+{
+  for (int i = 0; i < n_n; ++i)
+    {
+      set* gv1 = GRAPHROW(g1, i, n_m);
+      set* gv2 = GRAPHROW(g2, i, n_m);
+
+      int intersection = setinter(gv1, gv2, n_m);
+      if (intersection != setsize(gv1, n_m) || intersection != setsize(gv2, n_m))
+        return false;
+    }
+  return true;
+}
+
+bool
+Graph::EqualNauty(Graph& g2)
+{
+  // Assume that we already called ComputeDreadnaut
+  
+  graph n_g1[MAXN*MAXM];
+  graph n_g2[MAXN*MAXM];
+  int n_lab1[MAXN], n_lab2[MAXN];
+  int n_ptn1[MAXN], n_ptn2[MAXN];
+  int n_o1[MAXN], n_o2[MAXN];
+  static DEFAULTOPTIONS_GRAPH(n_options);
+  n_options.getcanon = TRUE;
+  n_options.defaultptn = FALSE;
+  setword n_ws[50*MAXM];
+  statsblk n_stats;
+  graph n_rg1[MAXN*MAXM];
+  graph n_rg2[MAXN*MAXM];
+
+  assert(aSimple.size() < MAXN);
+  assert(g2.aSimple.size() < MAXN);
+  if (aSimple.size() != g2.aSimple.size()) return false;
+  
+  int n_n = aSimple.size(), n_m = (n_n + WORDSIZE - 1) / WORDSIZE;
+  nauty_check(WORDSIZE, n_m, n_n, NAUTYVERSIONID);
+
+  for (int i = 0; i < n_n; ++i)
+    {
+      set* gv1 = GRAPHROW(n_g1, i, n_m);
+      EMPTYSET(gv1, n_m);
+      set* gv2 = GRAPHROW(n_g2, i, n_m);
+      EMPTYSET(gv2, n_m);
+      for (int j = 0; j < n_n; ++j)
+        if (i != j)
+          {
+            if (aSimple[i][j] != 0)
+              ADDELEMENT(gv1, j);
+            if (g2.aSimple[i][j] != 0)
+              ADDELEMENT(gv2, j);
+          }
+    }
+  
+  int cp1 = 1, cp2 = 1;
+  for (int i = 0; i < n_n; ++i)
+    {
+      n_lab1[i] = n_lab2[i] = i;
+      if (cp1 < partitions.size())
+        if (partitions[cp1] == i) { n_ptn1[i] = 0; ++cp1; }
+        else n_ptn1[i] = 1;
+      if (cp2 < g2.partitions.size())
+        if (partitions[cp2] == i) { n_ptn2[i] = 0; ++cp2; }
+        else n_ptn2[i] = 1;
+    }
+  
+  nauty((graph*)&n_g1,n_lab1,n_ptn1,NULL,n_o1,&n_options,&n_stats,
+        n_ws,50*n_m,n_m,n_n,(graph*)&n_rg1);
+  nauty((graph*)&n_g2,n_lab2,n_ptn2,NULL,n_o2,&n_options,&n_stats,
+        n_ws,50*n_m,n_m,n_n,(graph*)&n_rg2);
+
+  return aresame((graph*)&n_rg1, (graph*)&n_rg2, n_n, n_m);
+}
+#endif
+  
 bool
 Graph::EqualPermutations(Graph& g2)
 {

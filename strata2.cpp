@@ -19,7 +19,6 @@
 
 using namespace std;
 
-
 enum Printer { LaTeX, Text };
 
 int ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printer &printer);
@@ -140,6 +139,9 @@ PrintCompilationFlags(void)
 #endif
 #ifdef START_LAPACK_COMPUTATION
   fprintf(stderr, "START_LAPACK_COMPUTATION=%d ", START_LAPACK_COMPUTATION);
+#endif
+#ifdef USE_LINES_NO_MAP
+  fprintf(stderr, "USE_NAUTY ");
 #endif
   fprintf(stderr, "\n");
 }

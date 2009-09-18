@@ -12,6 +12,13 @@
 #define EPSILON 0.00000000001
 #endif
 
+#ifdef USE_NAUTY
+#define MAXN 32
+#include <cassert>
+#include "nauty/nauty.h"
+#include "nauty/naututil.h"
+#endif
+
 using namespace std;
 
 class Graph
@@ -23,7 +30,12 @@ class Graph
 
   const vector< int >& GetDivisions(void) const;
   bool Equal(Graph& g2);
+#ifdef START_LAPACK_COMPUTATION
   bool EqualLapack(Graph& g2);
+#endif
+#ifdef USE_NAUTY
+  bool EqualNauty(Graph& g2);
+#endif
   bool EqualPermutations(Graph& g2);
   bool operator==(const Graph& g2);
 
@@ -81,10 +93,15 @@ class Graph
   LaVectorDouble eigenvalues;
   LaGenMatDouble laMatrix;
 #endif
-  
+#ifdef USE_NAUTY
+  vector< vector< int > > aSimple;
+  vector< int > partitions;
+#endif
   void normal_print(void) const;
   void print_matrix(void) const;
+#ifdef USE_LINES_NO_MAP
   void print_matrix_sorted(void) const;
+#endif
   void pretty_print(int d, int r, const vector< bool >& divis,
                     int start, int end) const;
 
@@ -92,6 +109,11 @@ class Graph
 #ifdef START_LAPACK_COMPUTATION
   void ComputeEigenvalues(void);
   bool PermutationOk(Graph& g2, vector< int >& perm);
+#endif
+#ifdef USE_NAUTY
+  void print_matrix_simple(void) const;
+  void ComputeDreadnaut(void);
+  bool aresame(graph* g1, graph* g2, int n_n, int n_m);
 #endif
   vector< int > simple_divisions;
 

@@ -420,6 +420,9 @@ BoundaryComputer::bt_a(int i, int j)
 #ifdef START_LAPACK_COMPUTATION
           graph.ComputeEigenvalues();
 #endif
+#ifdef USE_NAUTY
+          graph.ComputeDreadnaut();
+#endif
           
           if (correct()) add_to_store();
 

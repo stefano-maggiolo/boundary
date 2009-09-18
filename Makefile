@@ -1,5 +1,7 @@
 SOURCES = $(wildcard *.cpp)
+CSOURCES = $(wildcard *.c)
 OBJECTS = $(patsubst %.cpp, %.o, $(SOURCES))
+COBJECTS = $(patsubst %.c, %.o, $(CSOURCES))
 HEADERS = $(wildcard *.h)
 
 # Flags available:
@@ -41,18 +43,23 @@ HEADERS = $(wildcard *.h)
 
 #     Before testing isomorphism of two graphs with number of nodes at least START_LAPACK_COMPUTATION, compute the eigenvalues of the adjacency matrices. If the sorted vectors of eigenvalues differ, the graphs are not isomorphic. If there is an eigenvalue with one-dimensional eigenspace and such that the coefficient of the corresponding eigenvector are all distinct, than the only possibility for g1 and g2 to be isomorphic is that one is the permutation of the other via the permutation matrix obtained by the permutation of the coefficients of the eigenvector. If this permutation failed to provide an isomorphism, or it sends a node to a node with different genus, number of marked points, number of loops, then the graphs cannot be isomorphic.
 
-FLAGS = -O2 -llapackpp -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP -DSTART_LAPACK_COMPUTATION=9
+CPPFLAGS = -O2 -llapackpp -DUSE_NAUTY -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP 
+
+#CFLAGS = -O2
 
 all: strata2
 
 %.o: %.cpp $(HEADERS)
-	g++ -c -o $*.o $*.cpp $(FLAGS)
+	g++ -c -o $*.o $*.cpp $(CPPFLAGS)
+
+#%.o: %.c $(HEADERS)
+#	gcc -c -o $*.o $*.c $(CFLAGS)
 
 clean:
 	rm -f $(OBJECTS) strata2
 
 strata2: $(OBJECTS) $(HEADERS)
-	g++ -o strata2 $(OBJECTS) $(FLAGS)
+	g++ -o strata2 $(OBJECTS) $(CPPFLAGS) ./nauty/nauty.o ./nauty/nautil.o ./nauty/naugraph.o ./nauty/naututil.o ./nauty/rng.o
 
 backup:
 	tar cf strata2.tar.gz ./
