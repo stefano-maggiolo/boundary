@@ -8,7 +8,11 @@
 #include <vector>
 #include <algorithm>
 #include <cstdio>
-#include <ctime>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <cstring>
+
+enum Statistics { Full, Terse, No };
 
 using namespace std;
 
@@ -19,11 +23,11 @@ class BoundaryComputer
   vector< Graph >& GetAllResults(void);
   map< int, vector< Graph > >& GetAllResultsByCodimension(void);
   void SaveAllResults(const char *filename);
-  void Compute(bool statisticsOnCerr, int computeOnlyCodim, GraphPrinter &printer);
-  void Compute(bool statisticsOnCerr, GraphPrinter &printer);
+  void Compute(GraphPrinter &printer, enum Statistics stat, int computeOnlyCodim);
+  void Compute(GraphPrinter &printer, enum Statistics stat);
   void Compute(GraphPrinter &printer);
-  void Statistics(FILE* file, int printOnlyCodim);
   void Statistics(FILE* file);
+  void TerseStatistics(FILE* file);
   
  private:
   //Backtracking functions: g for genera, m for marked points, l for loops, a for edges
@@ -71,15 +75,14 @@ class BoundaryComputer
   // Compute only this codimension
   int computeOnlyCodim;
 
-  // Print only this codimension
-  int printOnlyCodim;
-
   // Helper for updating degrees in the correct way
   int currentDivisionI;
   int currentDivisionJ;
 
   // Statistics
-  vector< int > statistics;
+  vector< int > statistics; // # graph, by codimension
+  vector< int > statisticsTime; // in ms, by K
+  vector< int > statisticsMemory; // in kB, by K
 };
 
 #endif

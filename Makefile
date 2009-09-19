@@ -59,6 +59,7 @@ HEADERS = $(wildcard *.h)
 #     Use nauty to check if two graphs are isomorphic.
 
 FLAGS = -O2 -DUSE_NAUTY -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP 
+#FLAGS = -O2 -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP -llapackpp -DSTART_LAPACK_COMPUTATION=9
 
 all: strata2
 

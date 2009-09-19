@@ -116,7 +116,9 @@ Graph::PrintPretty(FILE* f, int d, int r, const vector< bool >& divis,
 
 Graph::Graph()
 {
+#ifdef USE_NAUTY
   this->nautyK = -1;
+#endif
 }
 
 Graph::Graph(int g, int n, int k)
@@ -124,7 +126,9 @@ Graph::Graph(int g, int n, int k)
   this->G = g;
   this->M = n;
   this->K = k;
+#ifdef USE_NAUTY
   this->nautyK = -1;
+#endif
 }
 
 Graph::Graph(const Graph& g2)

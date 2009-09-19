@@ -33,9 +33,11 @@ BoundaryComputer::SaveAllResults(const char *filename)
 }
 
 void
-BoundaryComputer::Compute(bool statisticsOnCerr, int computeOnlyCodim, GraphPrinter &printer)
+BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int computeOnlyCodim)
 {
   statistics.assign(3*G-3+M+1, 0);
+  statisticsTime.assign(2*G-2+M+1, 0);
+  statisticsMemory.assign(2*G-2+M+1, 0);
 
   printer.BeginPrint();
   this->computeOnlyCodim = computeOnlyCodim;
@@ -53,8 +55,9 @@ BoundaryComputer::Compute(bool statisticsOnCerr, int computeOnlyCodim, GraphPrin
 
   graph.K = 1;
 
-  if (statisticsOnCerr) fprintf(stderr, "K = %2d... ", graph.K);
-  time_t time_start = time((time_t*)NULL);
+  if (stats == Full) fprintf(stderr, "K = %2d... ", graph.K);
+  struct rusage rusageBegin, rusageEnd;
+  getrusage(RUSAGE_SELF, &rusageBegin);
   
   for (int n = 0; n <= graph.G; n++)
     {
@@ -71,7 +74,38 @@ BoundaryComputer::Compute(bool statisticsOnCerr, int computeOnlyCodim, GraphPrin
           add_to_store();
         }
     }
-  if (statisticsOnCerr) fprintf(stderr, "done in %4ld seconds.\n", (time((time_t*)NULL) - time_start));
+
+  getrusage(RUSAGE_SELF, &rusageEnd);
+  statisticsTime[graph.K] = ((rusageEnd.ru_utime.tv_sec -
+                              rusageBegin.ru_utime.tv_sec)*1000 +
+                             (rusageEnd.ru_utime.tv_usec -
+                              rusageBegin.ru_utime.tv_usec)/1000);
+#ifdef GETRUSAGE_IMPLEMENTED
+  statisticsMemory[graph.K] = rusageEnd.ru_maxrss;
+#else
+  statisticsMemory[graph.K] = 0;
+  pid_t memoryPid = getpid();
+  char s[1000];
+  snprintf(s, 1000, "/proc/%d/status", memoryPid);
+  FILE* memoryFile = fopen(s, "rt");
+  while(fgets(s, 1000, memoryFile))
+    {
+      if (strncmp(s, "VmData:", 7) == 0)
+        statisticsMemory[graph.K] += atoi(s+8);
+      else if (strncmp(s, "VmStk:", 6) == 0)
+        statisticsMemory[graph.K] += atoi(s+7);
+      else if (strncmp(s, "VmExe:", 6) == 0)
+        statisticsMemory[graph.K] += atoi(s+7);
+    }
+  fclose(memoryFile);
+#endif
+  if (stats== Full)
+    fprintf(stderr, "done in %3d.%01d s, using %4d.%01d MB.\n",
+            statisticsTime[graph.K] / 1000,
+            statisticsTime[graph.K] / 100 % 10,
+            statisticsMemory[graph.K] / 1024,
+            statisticsMemory[graph.K] / 102 % 10);
+  
   printer.PrintSomeGraph(store);
   for (map< int, vector< Graph > >::iterator s = store.begin(); s != store.end(); ++s)
     statistics[s->first] += s->second.size();
@@ -83,8 +117,8 @@ BoundaryComputer::Compute(bool statisticsOnCerr, int computeOnlyCodim, GraphPrin
     {
       if (computeOnlyCodim != -1 && graph.K > computeOnlyCodim + 1) break;
 
-      if (statisticsOnCerr) fprintf(stderr, "K = %2d... ", graph.K);
-      time_start = time((time_t*)NULL);
+      if (stats== Full) fprintf(stderr, "K = %2d... ", graph.K);
+      getrusage(RUSAGE_SELF, &rusageBegin);
 
       // Every time, we rebuild the adjacency matrix with the right
       // dimension.
@@ -109,7 +143,38 @@ BoundaryComputer::Compute(bool statisticsOnCerr, int computeOnlyCodim, GraphPrin
       graph.p1 = 0;
       // Let's start.
       bt_g(0);
-      if (statisticsOnCerr) fprintf(stderr, "done in %4ld seconds.\n", (time((time_t*)NULL) - time_start));
+
+      getrusage(RUSAGE_SELF, &rusageEnd);
+      statisticsTime[graph.K] = ((rusageEnd.ru_utime.tv_sec -
+                                  rusageBegin.ru_utime.tv_sec)*1000 +
+                                 (rusageEnd.ru_utime.tv_usec -
+                                  rusageBegin.ru_utime.tv_usec)/1000);
+#ifdef GETRUSAGE_IMPLEMENTED
+      statisticsMemory[graph.K] = rusageEnd.ru_maxrss;
+#else
+      statisticsMemory[graph.K] = 0;
+      pid_t memoryPid = getpid();
+      char s[1000];
+      snprintf(s, 1000, "/proc/%d/status", memoryPid);
+      FILE* memoryFile = fopen(s, "rt");
+      while(fgets(s, 1000, memoryFile))
+        {
+          if (strncmp(s, "VmData:", 7) == 0)
+            statisticsMemory[graph.K] += atoi(s+8);
+          else if (strncmp(s, "VmStk:", 6) == 0)
+            statisticsMemory[graph.K] += atoi(s+7);
+          else if (strncmp(s, "VmExe:", 6) == 0)
+            statisticsMemory[graph.K] += atoi(s+7);
+        }
+      fclose(memoryFile);
+#endif
+      if (stats== Full)
+        fprintf(stderr, "done in %3d.%01d s, using %4d.%01d MB.\n",
+                statisticsTime[graph.K] / 1000,
+                statisticsTime[graph.K] / 100 % 10,
+                statisticsMemory[graph.K] / 1024,
+                statisticsMemory[graph.K] / 102 % 10);
+
       printer.PrintSomeGraph(store);
       for (map< int, vector< Graph > >::iterator s = store.begin(); s != store.end(); ++s)
         statistics[s->first] += s->second.size();
@@ -118,18 +183,21 @@ BoundaryComputer::Compute(bool statisticsOnCerr, int computeOnlyCodim, GraphPrin
 
   printer.EndPrint();
   computed = true;
+
+  if (stats== Full) Statistics(stderr);
+  else if (stats== Terse) TerseStatistics(stderr);
 }
 
 void
-BoundaryComputer::Compute(bool statisticsOnCerr, GraphPrinter &printer)
+BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stat)
 {
-  Compute(statisticsOnCerr, -1, printer);
+  Compute(printer, stat, -1);
 }
 
 void
 BoundaryComputer::Compute(GraphPrinter &printer)
 {
-  Compute(true, -1, printer);
+  Compute(printer, Full, -1);
 }
 
 void
@@ -511,14 +579,22 @@ BoundaryComputer::duplicate(void)
 }
 
 void
-BoundaryComputer::Statistics(FILE* file, int printOnlyCodim)
+BoundaryComputer::Statistics(FILE* file)
 {
-  this->printOnlyCodim = printOnlyCodim;
   if (!computed)
     {
       fprintf(file, "Not yet computed!\n");
       return;
     }
+
+  int ms = 0;
+  for (int i = 0; i < statisticsTime.size(); i++)
+    ms += statisticsTime[i];
+  fprintf(file, "Total time: %d.%01d s.\n", ms/1000, ms/100%10);
+  int kB = 0;
+  for (int i = 0; i < statisticsTime.size(); i++)
+    if (kB < statisticsMemory[i]) kB = statisticsMemory[i];
+  fprintf(file, "Total memory: %d.%01d MB.\n", kB/1024, kB/102 % 10);
   
   int s = 0;
   fprintf(file, "Tried       ");
@@ -559,7 +635,35 @@ BoundaryComputer::Statistics(FILE* file, int printOnlyCodim)
 }
 
 void
-BoundaryComputer::Statistics(FILE* file)
+BoundaryComputer::TerseStatistics(FILE* file)
 {
-  return Statistics(file, -1);
+  if (!computed)
+    {
+      fprintf(file, "Not yet computed!\n");
+      return;
+    }
+
+  fprintf(file, "(\n");
+
+  fprintf(file, " (");
+  for (int i = 0; i < statisticsTime.size(); i++)
+    fprintf(file, "%d,", statisticsTime[i]);
+  fprintf(file, "),\n");
+
+  fprintf(file, " (");
+  for (int i = 0; i < statisticsMemory.size(); i++)
+    fprintf(file, "%d,", statisticsMemory[i]);
+  fprintf(file, "),\n");
+
+  fprintf(file, " (");
+  for (int i = 0; i < found.size(); i++)
+    fprintf(file, "%d,", found[i]);
+  fprintf(file, "),\n");
+
+  fprintf(file, " (");
+  for (int i = 0; i < statistics.size(); i++)
+    fprintf(file, "%d,", statistics[i]);
+  fprintf(file, "),\n");
+
+  fprintf(file, ")\n");
 }

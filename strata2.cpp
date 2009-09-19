@@ -19,9 +19,8 @@
 
 using namespace std;
 
-enum Printer { LaTeX, Text };
-
-int ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printer &printer);
+int ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim,
+                     enum Printer& printer, enum Statistics& statistics);
 void PrintCompilationFlags(void);
 void QuitWithUsage(char* name);
 
@@ -31,8 +30,9 @@ main(int argc, char* argv[])
   int g, n, codim;
   int ret;
   enum Printer printer;
+  enum Statistics statistics;
     
-  ParseCommandLine(argc, argv, g, n, codim, printer);
+  ParseCommandLine(argc, argv, g, n, codim, printer, statistics);
   
   PrintCompilationFlags();
 
@@ -42,26 +42,28 @@ main(int argc, char* argv[])
     P = new LaTeXGraphPrinter(stdout, g, n);
   else if (printer == Text)
     P = new TextGraphPrinter(stdout, g, n);
-  c.Compute(true, codim, *P);
+  c.Compute(*P, statistics, codim);
 
-  // And some statistics.
-  c.Statistics(stderr);
-  
   return 0;
 }
 
 void
 QuitWithUsage(char* name)
 {
-  fprintf(stderr, "Usage:\n\t%s [-L|-T] [-c C] genus [marked_points]\n", name);
-  fprintf(stderr, "\t\t-L: print graphs in LaTeX (default)\n");
-  fprintf(stderr, "\t\t-T: print graphs in text format\n");
-  fprintf(stderr, "\t\t-cC: print only graphs with C edges\n");
+  fprintf(stderr, "Usage:\n\t%s [-P L|T] [-S F|T|N] [-C C] genus [marked_points]\n", name);
+  fprintf(stderr, "\t\t-P T: print graphs in LaTeX (default)\n");
+  fprintf(stderr, "\t\t-P L: print graphs in text format\n");
+  fprintf(stderr, "\t\t\n");
+  fprintf(stderr, "\t\t-S F: print full statistics (default)\n");
+  fprintf(stderr, "\t\t-S T: print terse statistics\n");
+  fprintf(stderr, "\t\t-S N: don't print statistics\n");
+  fprintf(stderr, "\t\t\n");
+  fprintf(stderr, "\t\t-C C: print only graphs with C edges\n");
   exit(1);
 }
 
 int
-ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printer &printer)
+ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printer& printer, enum Statistics& statistics)
 {
   // Check command line arguments
   codim = -1;
@@ -71,6 +73,7 @@ ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printe
     {
       bool def_g = false, def_n = false;
       printer = LaTeX; // default
+      statistics = Full; // default
       n = 0; // default
       for (int i = 1; i < argc; ++i)
         {
@@ -78,20 +81,40 @@ ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printe
             {
               if (argv[i][1] == '\0' || argv[i][2] != '\0')
                 QuitWithUsage(argv[0]);
-              else if (argv[i][1] == 'c')
+              else if (argv[i][1] == 'C')
                 {
                   if (i+1 >= argc)
                     QuitWithUsage(argv[0]);
                   else
-                    {
-                      codim = atoi(argv[i+1]);
-                      ++i;
-                    }
+                    codim = atoi(argv[i+1]);
+                  ++i;
                 }
-              else if (argv[i][1] == 'L')
-                printer = LaTeX;
-              else if (argv[i][1] == 'T')
-                printer = Text;
+              else if (argv[i][1] == 'P')
+                {
+                  if (i+1 >= argc || strlen(argv[i+1]) != 1)
+                    QuitWithUsage(argv[0]);
+                  else if (argv[i+1][0] == 'L')
+                    printer = LaTeX;
+                  else if (argv[i+1][0] == 'T')
+                    printer = Text;
+                  else
+                    QuitWithUsage(argv[0]);
+                  ++i;
+                }
+              else if (argv[i][1] == 'S')
+                {
+                  if (i+1 >= argc || strlen(argv[i+1]) != 1)
+                    QuitWithUsage(argv[0]);
+                  else if (argv[i+1][0] == 'F')
+                    statistics = Full;
+                  else if (argv[i+1][0] == 'T')
+                    statistics = Terse;
+                  else if (argv[i+1][0] == 'S')
+                    statistics = No;
+                  else
+                    QuitWithUsage(argv[0]);
+                  ++i;
+                }
               else
                 QuitWithUsage(argv[0]);
             }
@@ -115,8 +138,8 @@ ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printe
 
   if (2*g-3+n < 0)
     {
-      printf("Stability condition not verified! Try with 2g+m-3 non-negative!\n");
-      return 1;
+      fprintf(stderr, "Stability condition not verified! Try with 2g+n-3 non-negative!\n");
+      exit(1);
     }
   return 0;
 }
@@ -140,7 +163,7 @@ PrintCompilationFlags(void)
 #ifdef START_LAPACK_COMPUTATION
   fprintf(stderr, "START_LAPACK_COMPUTATION=%d ", START_LAPACK_COMPUTATION);
 #endif
-#ifdef USE_LINES_NO_MAP
+#ifdef USE_NAUTY
   fprintf(stderr, "USE_NAUTY ");
 #endif
   fprintf(stderr, "\n");

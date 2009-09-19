@@ -7,4 +7,6 @@
 #include "latex_graph_printer.h"
 #include "text_graph_printer.h"
 
+enum Printer { LaTeX, Text };
+
 #endif
