@@ -421,7 +421,11 @@ BoundaryComputer::bt_a(int i, int j)
           graph.ComputeEigenvalues();
 #endif
 #ifdef USE_NAUTY
-          graph.ComputeDreadnaut();
+          // Note: we could also compute all canonical labelling
+          // whether or not we'll use it: for example, for (6,0) there
+          // are just ~700 graphs for which the canonical labelling
+          // won't be used, but they are with K = 3.
+          graph.nautyK = -1;
 #endif
           
           if (correct()) add_to_store();

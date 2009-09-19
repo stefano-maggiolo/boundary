@@ -94,16 +94,16 @@ class Graph
   LaGenMatDouble laMatrix;
 #endif
 #ifdef USE_NAUTY
-  vector< vector< int > > aSimple;
-  vector< int > partitions;
+  int nautyK, nautyM;
+  graph nautyGraph[MAXN*MAXM];
 #endif
-  void normal_print(void) const;
-  void print_matrix(void) const;
+  void PrintNormal(FILE* f) const;
+  void PrintMatrix(FILE* f) const;
 #ifdef USE_LINES_NO_MAP
-  void print_matrix_sorted(void) const;
+  void PrintMatrixSorted(FILE* f) const;
 #endif
-  void pretty_print(int d, int r, const vector< bool >& divis,
-                    int start, int end) const;
+  void PrintPretty(FILE* f, int d, int r, const vector< bool >& divis,
+                   int start, int end) const;
 
   void ComputeDivisions(void);
 #ifdef START_LAPACK_COMPUTATION
@@ -111,9 +111,8 @@ class Graph
   bool PermutationOk(Graph& g2, vector< int >& perm);
 #endif
 #ifdef USE_NAUTY
-  void print_matrix_simple(void) const;
+  void PrintMatrixSimple(FILE* f, graph* g) const;
   void ComputeDreadnaut(void);
-  bool aresame(graph* g1, graph* g2, int n_n, int n_m);
 #endif
   vector< int > simple_divisions;
 

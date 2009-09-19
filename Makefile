@@ -39,27 +39,37 @@ HEADERS = $(wildcard *.h)
 #     isomorphic to g2. More refined than USE_DEGREES_MAP and faster
 #     for low number of nodes K.
 
-#   START_LAPACK_COMPUTATION (default=9)
+#   START_LAPACK_COMPUTATION (default=no)
 
-#     Before testing isomorphism of two graphs with number of nodes at least START_LAPACK_COMPUTATION, compute the eigenvalues of the adjacency matrices. If the sorted vectors of eigenvalues differ, the graphs are not isomorphic. If there is an eigenvalue with one-dimensional eigenspace and such that the coefficient of the corresponding eigenvector are all distinct, than the only possibility for g1 and g2 to be isomorphic is that one is the permutation of the other via the permutation matrix obtained by the permutation of the coefficients of the eigenvector. If this permutation failed to provide an isomorphism, or it sends a node to a node with different genus, number of marked points, number of loops, then the graphs cannot be isomorphic.
+#     Before testing isomorphism of two graphs with number of nodes at
+#     least START_LAPACK_COMPUTATION, compute the eigenvalues of the
+#     adjacency matrices. If the sorted vectors of eigenvalues differ,
+#     the graphs are not isomorphic. If there is an eigenvalue with
+#     one-dimensional eigenspace and such that the coefficient of the
+#     corresponding eigenvector are all distinct, than the only
+#     possibility for g1 and g2 to be isomorphic is that one is the
+#     permutation of the other via the permutation matrix obtained by
+#     the permutation of the coefficients of the eigenvector. If this
+#     permutation failed to provide an isomorphism, or it sends a node
+#     to a node with different genus, number of marked points, number
+#     of loops, then the graphs cannot be isomorphic.
 
-CPPFLAGS = -O2 -llapackpp -DUSE_NAUTY -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP 
+#   USE_NAUTY (default=yes
 
-#CFLAGS = -O2
+#     Use nauty to check if two graphs are isomorphic.
+
+FLAGS = -O2 -DUSE_NAUTY -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP 
 
 all: strata2
 
 %.o: %.cpp $(HEADERS)
-	g++ -c -o $*.o $*.cpp $(CPPFLAGS)
-
-#%.o: %.c $(HEADERS)
-#	gcc -c -o $*.o $*.c $(CFLAGS)
+	g++ -c -o $*.o $*.cpp $(FLAGS)
 
 clean:
 	rm -f $(OBJECTS) strata2
 
 strata2: $(OBJECTS) $(HEADERS)
-	g++ -o strata2 $(OBJECTS) $(CPPFLAGS) ./nauty/nauty.o ./nauty/nautil.o ./nauty/naugraph.o ./nauty/naututil.o ./nauty/rng.o
+	g++ -o strata2 $(OBJECTS) $(FLAGS) ./nauty/nauty.o ./nauty/nautil.o ./nauty/naugraph.o ./nauty/naututil.o ./nauty/rng.o
 
 backup:
 	tar cf strata2.tar.gz ./
