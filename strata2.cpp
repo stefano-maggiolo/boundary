@@ -148,6 +148,7 @@ void
 PrintCompilationFlags(void)
 {
   fprintf(stderr, "Compilation flags: ");
+  fprintf(stderr, "%s ", REVISION);
 #ifdef USE_DEGREES_MAP
   fprintf(stderr, "USE_DEGREES_MAP ");
 #endif
