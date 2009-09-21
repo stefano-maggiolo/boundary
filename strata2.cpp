@@ -147,8 +147,11 @@ ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printe
 void
 PrintCompilationFlags(void)
 {
+  static char r[] = "$Rev: 6 $";
+  int l = strlen(r);
+  r[l-2] = '\0';
   fprintf(stderr, "Compilation flags: ");
-  fprintf(stderr, "%s ", REVISION);
+  fprintf(stderr, "R=%s ", r+6);
 #ifdef USE_DEGREES_MAP
   fprintf(stderr, "USE_DEGREES_MAP ");
 #endif

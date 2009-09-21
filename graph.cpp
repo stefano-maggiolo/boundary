@@ -444,8 +444,10 @@ Graph::ComputeDreadnaut(void)
                 ptn[nautyK] = 1;
                 ++nautyK;
               }
-          // Add a fake vertex to preserve colouring
-          if (!found) ++nautyK;
+          // Add a fake vertex to preserve colouring.
+          // Not needed if we compare before g,m,l
+          //  and use something in USE_DEGREES_*.
+          //if (!found) ++nautyK;
           ptn[nautyK-1] = 0;
         }
   for (int ia = 2; ia <= maxa; ++ia)
@@ -461,7 +463,8 @@ Graph::ComputeDreadnaut(void)
               ptn[nautyK] = 1;
               ++nautyK;
             }
-      if (!found) ++nautyK;
+      // Same as before.
+      //if (!found) ++nautyK;
       ptn[nautyK-1] = 0;
     }
   assert(nautyK < MAXN);
@@ -517,7 +520,7 @@ Graph::ComputeDreadnaut(void)
 bool
 Graph::EqualNauty(Graph& g2)
 {
-  // Assume that we already called ComputeDreadnaut
+  // We don't assume that we already called ComputeDreadnaut
   if (nautyK == -1) ComputeDreadnaut();
   if (g2.nautyK == -1) g2.ComputeDreadnaut();
 

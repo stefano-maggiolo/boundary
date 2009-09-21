@@ -11,6 +11,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <cstring>
+#include <unistd.h>
 
 enum Statistics { Full, Terse, No };
 

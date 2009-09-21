@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 
-from subprocess import Popen, PIPE
 from sys import argv, exit
 import shelve
+from subprocess import Popen, PIPE
+import os, signal, time
+from copy import deepcopy
 
-from test_graph import plot
+try:
+    from test_graph import plot
+except:
+    pass
 
 # Database of known cases
 
@@ -113,22 +118,27 @@ correct[(6,0)] = ((0,7,97,699,3100,8662,15961,19043,14525,6338,1376,),
 
 # Easy cases and hard cases
 
-easy = [(0,3), (0,4), (0,5), (0,6), (0,7), (0,8),
-        (0,9), (0,10), (0,11), (0,12), (0,13),
-        (1,1), (1,2), (1,3), (1,4), (1,5),
-        (1,6), (1,7), (1,8), (1,9),
-        (2,0), (2,1), (2,2), (2,3), (2,4), (2,5), (2,6),
-        (3,0), (3,1), (3,2), (3,3), (3,4),
-        (4,0), (4,1), (4,2),
-        (5,0)]
-hard = [(0,14), (0,15),
-        (1,10), (1,11),
-        (2,7), (2,8),
-        (3,5), (3,6),
-        (4,3), (4,4),
-        (5,1), (5,2),
-        (6,0)]
-        
+easy = [
+    (0,3), (0,4), (0,5), (0,6), (0,7), (0,8),
+    (0,9), (0,10), (0,11), (0,12), (0,13), (0,14), # K=12 C=11
+    (1,1), (1,2), (1,3), (1,4), (1,5),
+    (1,6), (1,7), (1,8), (1,9), (1,10), # K=10 C=10
+    (2,0), (2,1), (2,2), (2,3), (2,4), (2,5),
+    (2,6), (2,7), # K=9 C=10
+    (3,0), (3,1), (3,2), (3,3), (3,4), # K=8 C=10
+    (4,0), (4,1), (4,2), # K=8 C=11
+    (5,0), (5,1), # K=9 C=11
+    ] 
+hard = [
+    # K=12 C=11
+    (1,11), # K=11 C=11
+    (2,8), # K=10 C=11
+    (3,5), # K=9 C=11
+    (4,3), # K=9 C=12
+    # K=9 C=11
+    (6,0), # K=10 C=15
+    ]
+
 # Utility functions
 
 def compressFlags(f):
@@ -139,7 +149,12 @@ def compressFlags(f):
         y = []
         for a in x:
             y += a.split("=")
-        s = "".join([a[0] for a in y])
+        def t(s):
+            if s[0] in [str(i) for i in range(10)]:
+                return s
+            else:
+                return s[0]
+        s = "".join([t(a) for a in y])
         r.append(s)
     return " ".join(r)
     
@@ -169,22 +184,37 @@ def strMemRel(s, tot):
 
 # Testing
 
-def addToStore(name, replace = False):
-    firstIteration = True
-    current = {}
-    for gn in easy:
-        process = Popen(name + " -S T %d %d > /dev/null" % gn,
-                        shell=True, bufsize=1,
-                        stdin=PIPE, stdout=PIPE, stderr=PIPE,
-                        close_fds=True)
-        e = process.stderr
+def getFlags(name):
+    process = Popen(name + " -S T 0 3 > /dev/null",
+                    shell=True, bufsize=1,
+                    stdin=PIPE, stdout=PIPE, stderr=PIPE,
+                    close_fds=True)
+    e = process.stderr
+    flags = e.readline()[:-1]
+    os.kill(process.pid, signal.SIGTERM)
+    return flags
 
-        flags = e.readline()[:-1]
-        if not replace and firstIteration and p.has_key(flags):
-            print "Already in store (use replace)!"
-            exit(1)
-        firstIteration = False
+def compute(name, flags, gn, maxTime = 60*5):
+    print "Computing %d %d... " % gn,
+    process = Popen(name + " -S T %d %d > /dev/null" % gn,
+                    shell=True, bufsize=1,
+                    stdin=PIPE, stdout=PIPE, stderr=PIPE,
+                    close_fds=True)
+    e = process.stderr
+    e.readline()[:-1]
+
+    current = {}
+    current["flags"] = flags
+    current["name"] = name
         
+    i = 0
+    while i < maxTime:
+        if process.poll() != None: break
+        time.sleep(1)
+        i += 1
+            
+    if i < maxTime:
+        print "ok."
         s = e.readline()
         s += e.readline()
         s += e.readline()
@@ -194,16 +224,54 @@ def addToStore(name, replace = False):
         s = eval(s)
         if (s[2:4] != correct[gn]):
             print "Case %d %d not correct!" % gn
-            break;
-        current[gn] = {}
-        current[gn]["flags"] = flags
-        current[gn]["time"] = s[0]
-        current[gn]["memory"] = s[1]
-    p[flags] = current
+            return None
+        current["time"] = s[0]
+        current["memory"] = s[1]
+    else:
+        print "killed"
+        os.kill(process.pid, signal.SIGTERM)
+        current["time"] = (0,) * (2*gn[0]-2+gn[1]) + (maxTime*1000,)
+        current["memory"] = (0,) * (2*gn[0]-1+gn[1])
+        
+    return current
+    
+def addToStore(name, replace = False):
+    flags = getFlags(name)
+    if p.has_key(flags) and not replace:
+        print "\nAlready in store (use delete or replace)!"
+        exit(1)
+    p[flags] = {}
+    for gn in easy:
+        p[flags][gn] = compute(name, flags, gn)
+        if p[flags][gn] == None:
+            del(p[flags])
+            return
+    compare(flags, write = False, write2 = True)
 
-    compare(flags, write = False)
+def fill():
+    global notBest
+    global notOverall
+    notBest = True
+    p["best"] = {}
+    for gn in easy:
+        p["best"][gn] = {}
+    notOverall = True
+    p["overall"] = {}
+    for gn in easy:
+        p["overall"][gn] = {}
 
-def compare(flags, write = True):
+    for f in p.keys():
+        if f == "best" or f == "overall": continue
+        name = p[f][p[f].keys()[0]]["name"]
+        for gn in easy:
+            if gn in p[f].keys(): continue
+            p[f][gn] = compute(name, f, gn)
+            if p[f][gn] == None:
+                del(p[f])
+                break
+        compare(f, write = False)
+
+def compare(flags, write = True, write2 = False):
     if not p.has_key(flags):
         print "Flags not in store!"
         exit(1)
@@ -223,40 +291,46 @@ def compare(flags, write = True):
     moverallTotB = 0
     moverallTotO = 0
     for gn in easy:
+        notBestgn = notBest or not p["best"].has_key(gn)
+        notOverallgn = notOverall or not p["overall"].has_key(gn)
         curm = current[gn]["memory"]
         curt = current[gn]["time"]
-        bestm = p["best"][gn]["memory"]
-        bestt = p["best"][gn]["time"]
-        overallm = p["overall"][gn]["memory"]
-        overallt = p["overall"][gn]["time"]
-        print "\033[1mCase %d %d\033[22m" % gn
-        print " Current (%s)" % compressFlags(flags)
-        if not notBest:
-            print " Best (%s):" % compressFlags(p["best"][gn]["flags"])
-        if not notOverall:
-            print " Overall best (%s):" % compressFlags(p["overall"][gn]["flags"])
+        if not notBestgn:
+            bestm = p["best"][gn]["memory"]
+            bestt = p["best"][gn]["time"]
+        if not notOverallgn:
+            overallm = p["overall"][gn]["memory"]
+            overallt = p["overall"][gn]["time"]
+        if write: print "\033[1mCase %d %d\033[22m" % gn
+        if write: print " Current (%s)" % compressFlags(flags)
+        if not notBestgn:
+            if write: print " Best (%s):" % \
+                    compressFlags(p["best"][gn]["flags"])
+        if not notOverallgn:
+            if write: print " Overall best (%s):" % \
+                    compressFlags(p["overall"][gn]["flags"])
 
         mtot[gn] = 0
         mtotB[gn] = 0
         mtotO[gn] = 0
-        print "\033[1mMemory (MB):\033[22m"
+        if write: print "\033[1mMemory (MB):\033[22m"
         for x in range(len(curm)):
-            print "K=%2d:      " % x,
-            print strMem(curm[x]), " ",
+            if write: print "K=%2d:      " % x,
+            if write: print strMem(curm[x]), " ",
             mtot[gn] = max(mtot[gn], curm[x])
-            if not notBest:
-                print strMemRel(curm[x] - bestm[x], curm[x]), " ",
+            if not notBestgn:
+                if write: print strMemRel(curm[x] - bestm[x], curm[x]), " ",
                 mtotB[gn] = max(mtotB[gn], bestm[x])
-            if not notOverall:
-                print strMemRel(curm[x] - overallm[x], curm[x]), " ",
+            if not notOverallgn:
+                if write: print strMemRel(curm[x] - overallm[x], curm[x]), " ",
                 mtotO[gn] = max(mtotO[gn], overallm[x])
-            print
-        print "\033[1mMax:        " + strMem(mtot[gn]), " ",
-        if not notBest:
-            print strMemRel(mtot[gn]-mtotB[gn], mtot[gn]), " ",
-        if not notOverall:
-            print strMemRel(mtot[gn]-mtotO[gn], mtot[gn]), " ", 
-        print "\033[22m"
+            if write: print
+        if write: print "\033[1mMax:        " + strMem(mtot[gn]), " ",
+        if not notBestgn:
+            if write: print strMemRel(mtot[gn]-mtotB[gn], mtot[gn]), " ",
+        if not notOverallgn:
+            if write: print strMemRel(mtot[gn]-mtotO[gn], mtot[gn]), " ", 
+        if write: print "\033[22m"
         moverallTot = max(moverallTot, mtot[gn])
         moverallTotB = max(moverallTotB, mtotB[gn])
         moverallTotO = max(moverallTotO, mtotO[gn])
@@ -264,129 +338,245 @@ def compare(flags, write = True):
         tot[gn] = 0
         totB[gn] = 0
         totO[gn] = 0
-        print "\033[1mTime (s):\033[22m"
+        if write: print "\033[1mTime (s):\033[22m"
         for x in range(len(curt)):
-            print "K=%2d:      " % x,
-            print strSec(curt[x]), " ",
+            if write: print "K=%2d:      " % x,
+            if write: print strSec(curt[x]), " ",
             tot[gn] += curt[x]
-            if not notBest:
-                print strSecRel(curt[x] - bestt[x], curt[x]), " ",
+            if not notBestgn:
+                if write: print strSecRel(curt[x] - bestt[x], curt[x]), " ",
                 totB[gn] += bestt[x]
-            if not notOverall:
-                print strSecRel(curt[x] - overallt[x], curt[x]), " ",
+            if not notOverallgn:
+                if write: print strSecRel(curt[x] - overallt[x], curt[x]), " ",
                 totO[gn] += overallt[x]
-            print
-        print "\033[1mTot:        " + strSec(tot[gn]), " ",
-        if not notBest:
-            print strSecRel(tot[gn]-totB[gn], tot[gn]), " ",
-        if not notOverall:
-            print strSecRel(tot[gn]-totO[gn], tot[gn]), " ", 
-        print "\033[22m"
-        print
+            if write: print
+        if write: print "\033[1mTot:        " + strSec(tot[gn]), " ",
+        if not notBestgn:
+            if write: print strSecRel(tot[gn]-totB[gn], tot[gn]), " ",
+        if not notOverallgn:
+            if write: print strSecRel(tot[gn]-totO[gn], tot[gn]), " ", 
+        if write: print "\033[22m"
+        if write: print
         overallTot += tot[gn]
         overallTotB += totB[gn]
         overallTotO += totO[gn]
 
-        if notBest or tot < totB: # Replace best
+        if notBestgn or tot[gn] < totB[gn]: # Replace best
             replaceBest.append(gn)
 
-    print "\033[1mOverall\033[22m"
-    print " Current (%s)" % compressFlags(flags)
+    if write: print "\033[1mOverall\033[22m"
+    if write: print " Current (%s)" % compressFlags(flags)
     if not notOverall:
-        print " Overall best (%s):" % compressFlags(p["overall"][easy[0]]["flags"])
+        if write: print " Overall best (%s):" % compressFlags(p["overall"][easy[0]]["flags"])
+    if write: print "\033[1mMemory (MB):\033[22m"
+    for gn in easy:
+        notBestgn = notBest or not p["best"].has_key(gn)
+        notOverallgn = notOverall or not p["overall"].has_key(gn)
+        if write: print "g,n=%2d,%2d: " % gn,
+        if write: print strMem(mtot[gn]), " ",
+        if not notBestgn:
+            if write: print strMemRel(mtot[gn] - mtotB[gn], mtot[gn]), " ",
+        if not notOverallgn:
+            if write: print strMemRel(mtot[gn] - mtotO[gn], mtot[gn]), " ",
+        if write: print
+    if write: print "\033[1mMax:        " + strMem(moverallTot), " ",
+    if not notBest:
+        if write: print strMemRel(moverallTot-moverallTotB, moverallTot), " ",
+    if not notOverall:
+        if write: print strMemRel(moverallTot-moverallTotO, moverallTot), " ",
+    if write: print "\033[22m"
+
+    if write: print "\033[1mTime (s):\033[22m"
+    for gn in easy:
+        notBestgn = notBest or not p["best"].has_key(gn)
+        notOverallgn = notOverall or not p["overall"].has_key(gn)
+        if write: print "g,n=%2d,%2d: " % gn,
+        if write: print strSec(tot[gn]), " ",
+        if not notBestgn:
+            if write: print strSecRel(tot[gn] - totB[gn], tot[gn]), " ",
+        if not notOverallgn:
+            if write: print strSecRel(tot[gn] - totO[gn], tot[gn]), " ",
+        if write: print
+    if write: print "\033[1mTot:        " + strSec(overallTot), " ",
+    if not notBest:
+        if write: print strSecRel(overallTot-overallTotB, overallTot), " ",
+    if not notOverall:
+        if write: print strSecRel(overallTot-overallTotO, overallTot), " ",
+    if write: print "\033[22m"
+    if write: print
+
+    for gn in replaceBest:
+        if write2: print "New %d, %d best!" % gn
+        p["best"][gn]["flags"] = current[gn]["flags"]
+        p["best"][gn]["name"] = current[gn]["name"]
+        p["best"][gn]["time"] = current[gn]["time"]
+        p["best"][gn]["memory"] = current[gn]["memory"]
+
+    if notOverall or overallTot < overallTotO: # Replace overall
+        if write2: print "New overall best!"
+        for gn in easy:
+            p["overall"][gn]["flags"] = current[gn]["flags"]
+            p["overall"][gn]["name"] = current[gn]["name"]
+            p["overall"][gn]["time"] = current[gn]["time"]
+            p["overall"][gn]["memory"] = current[gn]["memory"]
+
+    p[current[easy[0]]["flags"]] = current
+
+def compareTwo(f1, f2):
+    if not p.has_key(f1) or not p.has_key(f2):
+        print "Flags not in store!"
+        exit(1)
+
+    tot1 = {}
+    tot2 = {}
+    mtot1 = {}
+    mtot2 = {}
+    overallTot1 = 0
+    overallTot2 = 0
+    moverallTot1 = 0
+    moverallTot2 = 0
+
+    for gn in easy:
+        m1 = p[f1][gn]["memory"]
+        t1 = p[f1][gn]["time"]
+        m2 = p[f2][gn]["memory"]
+        t2 = p[f2][gn]["time"]
+        print "\033[1mCase %d %d\033[22m" % gn
+        print " First  (%s)" % compressFlags(f1)
+        print " Second (%s):" % compressFlags(f2)
+
+        mtot1[gn] = 0
+        mtot2[gn] = 0
+        print "\033[1mMemory (MB):\033[22m"
+        for x in range(len(m1)):
+            print "K=%2d:      " % x,
+            print strMem(m1[x]), " ",
+            mtot1[gn] = max(mtot1[gn], m1[x])
+            print strMemRel(m1[x] - m2[x], m1[x]), " ",
+            mtot2[gn] = max(mtot2[gn], m2[x])
+            print
+        print "\033[1mMax:        " + strMem(mtot1[gn]), " ",
+        print strMemRel(mtot1[gn]-mtot2[gn], mtot1[gn]), " ",
+        print "\033[22m"
+        moverallTot1 = max(moverallTot1, mtot1[gn])
+        moverallTot2 = max(moverallTot2, mtot2[gn])
+
+        tot1[gn] = 0
+        tot2[gn] = 0
+        print "\033[1mTime (s):\033[22m"
+        for x in range(len(t1)):
+            print "K=%2d:      " % x,
+            print strSec(t1[x]), " ",
+            tot1[gn] += t1[x]
+            print strSecRel(t1[x] - t2[x], t1[x]), " ",
+            tot2[gn] += t2[x]
+            print
+        print "\033[1mTot:        " + strSec(tot1[gn]), " ",
+        print strSecRel(tot1[gn]-tot2[gn], tot1[gn]), " ",
+        print "\033[22m"
+        print
+        overallTot1 += tot1[gn]
+        overallTot2 += tot2[gn]
+
+    print "\033[1mOverall\033[22m"
+    print " First  (%s)" % compressFlags(f1)
+    print " Second (%s):" % compressFlags(f2)
     print "\033[1mMemory (MB):\033[22m"
     for gn in easy:
         print "g,n=%2d,%2d: " % gn,
-        print strMem(mtot[gn]), " ",
-        if not notBest:
-            print strMemRel(mtot[gn] - mtotB[gn], mtot[gn]), " ",
-        if not notOverall:
-            print strMemRel(mtot[gn] - mtotO[gn], mtot[gn]), " ",
+        print strMem(mtot1[gn]), " ",
+        print strMemRel(mtot1[gn] - mtot2[gn], mtot1[gn]), " ",
         print
-    print "\033[1mMax:        " + strMem(moverallTot), " ",
-    if not notBest:
-        print strMemRel(moverallTot-moverallTotB, moverallTot), " ",
-    if not notOverall:
-        print strMemRel(moverallTot-moverallTotO, moverallTot), " ",
+    print "\033[1mMax:        " + strMem(moverallTot1), " ",
+    print strMemRel(moverallTot1-moverallTot2, moverallTot1), " ",
     print "\033[22m"
 
     print "\033[1mTime (s):\033[22m"
     for gn in easy:
         print "g,n=%2d,%2d: " % gn,
-        print strSec(tot[gn]), " ",
-        if not notBest:
-            print strSecRel(tot[gn] - totB[gn], tot[gn]), " ",
-        if not notOverall:
-            print strSecRel(tot[gn] - totO[gn], tot[gn]), " ",
+        print strSec(tot1[gn]), " ",
+        print strSecRel(tot1[gn] - tot2[gn], tot1[gn]), " ",
         print
-    print "\033[1mTot:        " + strSec(overallTot), " ",
-    if not notBest:
-        print strSecRel(overallTot-overallTotB, overallTot), " ",
-    if not notOverall:
-        print strSecRel(overallTot-overallTotO, overallTot), " ",
+    print "\033[1mTot:        " + strSec(overallTot1), " ",
+    print strSecRel(overallTot1-overallTot2, overallTot1), " ",
     print "\033[22m"
     print
 
-    for gn in replaceBest:
-        p["best"][gn]["flags"] = current[gn]["flags"]
-        p["best"][gn]["time"] = current[gn]["time"]
-        p["best"][gn]["memory"] = current[gn]["memory"]
-
-    if notOverall or overallTot < overallTotO: # Replace overall
-        for g,n in easy:
-            p["overall"][(g,n)]["flags"] = current[(g,n)]["flags"]
-            p["overall"][(g,n)]["time"] = current[(g,n)]["time"]
-            p["overall"][(g,n)]["memory"] = current[(g,n)]["memory"]
-
-    p[current[easy[0]]["flags"]] = current
-
+def flagsFromPar(s):
+    if p.has_key(s): return s
+    for x in p.keys():
+        if s == p[x][easy[0]]["name"]:
+            return x
+    s = int(s)
+    if s > 0:
+        i = 0
+        n = 0
+        k = p.keys()
+        while i < len(k):
+            while i < len(k) and (k[i] == "best" or k[i] == "overall"): i += 1
+            if i >= len(k): break
+            if n+1 == s: return k[i]
+            i += 1
+            n += 1
+    return None
+    
 def plotSM():
-    xAxis = [[], [], []]
-    i = 0
-    while True:
-        if (i,(5-i)*2) not in easy: break
-        xAxis[0].append((i, (5-i)*2))
-        i += 1
-
-    i = 2
-    while True:
-        if (i,0) not in easy: break
-        xAxis[1].append((i,0))
-        i += 1
-
-    i = 3
-    while True:
-        if (0,i) not in easy: break
-        xAxis[2].append((0,i))
-        i += 1
-        
-    seriesS = [[], [], []]
-    seriesM = [[], [], []]
+    numPlots = 4
+    xAxis = [[] for i in xrange(numPlots)]
+    seriesS = [[] for i in xrange(numPlots)]
+    seriesM = [[] for i in xrange(numPlots)]
     legend = []
+
+    xAxis[0] = [x for x in easy if x[1] == (5-x[0]) * 2]
+    xAxis[0].sort()
+
+    xAxis[1] = [x for x in easy if x[1] == 0]
+    xAxis[1].sort()
+
+    xAxis[2] = [x for x in easy if x[0] == 0]
+    xAxis[2].sort()
+
+    def compgn(gn1, gn2):
+# Sort by time of best implementation
+        if not notBest:
+            return sum(p["best"][gn1]["time"]) - sum(p["best"][gn2]["time"])
+        else:
+# Sort by dimension of moduli space
+            if 3*gn1[0] - 3 + gn1[1] != 3*gn2[0] - 3 + gn2[1]:
+                return (3*gn1[0] - 3 + gn1[1]) - (3*gn2[0] - 3 + gn2[1])
+            else:
+                return gn1[0] - gn2[0]
+    xAxis[3] = easy
+    xAxis[3].sort(cmp = compgn)
+
     for x in p.keys():
         if x != "best" and x != "overall":
-            for i in range(3):
+            for i in range(numPlots):
                 s = [sum(p[x][gn]["time"]) for gn in xAxis[i]]
                 seriesS[i].append(s)
                 s = [max(p[x][gn]["memory"]) for gn in xAxis[i]]
                 seriesM[i].append(s)
             legend.append(compressFlags(x))
-
-    for i in range(3):
-        plot(xAxis[i], seriesS[i], "plot_%d_time.png" % i,
-             title = "Time (log(s))", legend = legend)
-        plot(xAxis[i], seriesM[i], "plot_%d_memory.png" % i,
-             title = "Memory (log(MB))", legend = legend)
-#        plot(xAxis[i], seriesS[i], "plot_%d_time.png" % i,
-#            title = "Time (s)", logarithmic = False, legend = legend)
-#        plot(xAxis[i], seriesM[i], "plot_%d_memory.png" % i,
-#             title = "Memory (MB)", logarithmic = False, legend = legend)
+    exit(0)
+    for i in range(numPlots):
+        plot(xAxis[i], seriesS[i], "plot_%d_time_log.png" % i,
+             title = "Time (log(ms))", legend = legend)
+        plot(xAxis[i], seriesM[i], "plot_%d_memory_log.png" % i,
+             title = "Memory (log(kB))", legend = legend)
+        plot(xAxis[i], seriesS[i], "plot_%d_time_lin.png" % i,
+             title = "Time (s)", logarithmic = False,
+             scale = 1000.0, legend = legend)
+        plot(xAxis[i], seriesM[i], "plot_%d_memory_lin.png" % i,
+             title = "Memory (MB)", logarithmic = False,
+             scale = 1024.0, legend = legend)
 
 def printStored():
     print "Stored:"
+    i = 1
     for x in p.keys():
         if x != "best" and x != "overall":
-            print x
+            print "%2d: %s" % (i, x)
+            i += 1
     
 # Format:
 
@@ -406,13 +596,13 @@ p = shelve.open("performances", writeback = True)
 if not p.has_key("best"):
     notBest = True
     p["best"] = {}
-    for g,n in easy:
-        p["best"][(g,n)] = {}
+    for gn in easy:
+        p["best"][gn] = {}
 if not p.has_key("overall"):
     notOverall = True
     p["overall"] = {}
-    for g,n in easy:
-        p["overall"][(g,n)] = {}
+    for gn in easy:
+        p["overall"][gn] = {}
 
 # MAIN METHOD!
 
@@ -420,6 +610,8 @@ if len(argv) == 1: exit(1)
 elif len(argv) == 2:
     if argv[1] == "stored":
         printStored()
+    elif argv[1] == "fill":
+        fill()
     elif argv[1] == "plot":
         plotSM()
     else:
@@ -428,9 +620,19 @@ elif len(argv) == 3:
     if argv[1] == "add":
         addToStore(argv[2])
     elif argv[1] == "replace":
-        addToStore(argv[2], replace = True)
+        addToStore(flagsFromPar(argv[2]), replace = True)
     elif argv[1] == "compare":
-        compare(argv[2])
+        compare(flagsFromPar(argv[2]))
+    elif argv[1] == "remove":
+        f = flagsFromPar(argv[2])
+        print "Removing ", argv[2], " ", f
+        if p.has_key(f):
+            del(p[f])
+    else:
+        exit(1)
+elif len(argv) == 4:
+    if argv[1] == "compare":
+        compareTwo(flagsFromPar(argv[2]), flagsFromPar(argv[3]))
     else:
         exit(1)
         
