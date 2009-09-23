@@ -112,47 +112,9 @@ LaTeXGraphPrinter::print_middle(Graph *graph, bool level_by_vertices)
       fprintf(file, " \\\\\n");
     }
   fprintf(file, "    $\\scriptstyle{(%d, %d, %d)}$ & \n", graph->K, counter, c);
-  fprintf(file, "    \\begin{tikzpicture}[baseline]\n");
-  fprintf(file, "      \\path(0,0) ellipse (2 and %d);\n", (graph->K>2? 2: 1));
-  
-  for (int i = 0; i < graph->K; i++)
-    {
-      // The following parameter is decorative: it is used to center the position of the marked point when it is only one.
-      int param=0;
-      int param2=0;
-      int inutile=0;
-      (graph->m[i]==1)?param=30:param=0;
-      graph->K==1?param2=30:param2=0;
-      if (graph->m[i]!=0 && graph->a[i][i] !=0)
-        fprintf(file, "      \\tikzstyle{level 1}=[counterclockwise from=%d,level distance=9mm,sibling angle=%d]\n", -120+360*i/graph->K+2*param-param2, (graph->m[i]==1?0: (60+2*param2)/(graph->m[i]-1)));
-      (graph->m[i]==1 && graph->K==1)? inutile = 30:inutile=0;
-      if (graph->m[i]!=0 && graph->a[i][i] ==0)
-        fprintf(file, "      \\tikzstyle{level 1}=[counterclockwise from=%d,level distance=9mm,sibling angle=%d]\n", -60+360*i/graph->K+2*param-param2+inutile, (graph->m[i]==1?0: (120+8*param2)/(graph->m[i]-1)));;
-      fprintf(file, "      \\node (A%d) at (%d:1) {$\\scriptstyle{%d_{%d}}$}", i, (360 * i / graph->K), graph->g[i], graph->m[i]);	
-      for (int j= 0; j< graph->m[i]; j++)
-        fprintf(file, " child");
-      fprintf(file, ";\n");
-    }
-  fprintf(file, "\n");	
 
-  for (int i = 0; i < graph->K; i++)
-    for (int j = 0; j < graph->a[i][i]; j++)
-      {
-        int param=0;
-        graph->K==1?param=2:param=0;
-        if (graph->m[i]!=0)
-          fprintf(file, "      \\draw (A%d) .. controls +(%lf:1.2) and +(%lf:1.2) .. (A%d);\n", i, ((j - graph->a[i][i]/2.0+1+param) * 30 + (360*i/graph->K)), ((j - graph->a[i][i]/2.0 + 2+param) * 30 + (360*i/graph->K)), i);
-        else
-          fprintf(file, "      \\draw (A%d) .. controls +(%lf:1.2) and +(%lf:1.2) .. (A%d);\n", i, ((j - graph->a[i][i]/2.0) * 30 + (360*i/graph->K)), ((j - graph->a[i][i]/2.0 + 1) * 30 + (360*i/graph->K)), i);
-      }
+  graph->PrintLaTeX(file);
 
-  for (int i = 0; i < graph->K; i++)
-    for (int j = i+1; j < graph->K; j++)
-      for (int k = 0; k < graph->a[i][j]; k++)
-        fprintf(file, "      \\path (A%d) edge [bend left=%lf] (A%d);\n", i, ((k - graph->a[i][j]/2.0) * 30+15), j);
-
-  
-  fprintf(file, "    \\end{tikzpicture}\n");
   if (counter % rowLength == 0) fprintf(file, "\\\\\n\n");
   else fprintf(file, "    & \n");
 }

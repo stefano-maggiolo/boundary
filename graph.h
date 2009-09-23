@@ -98,6 +98,7 @@ class Graph
   graph nautyGraph[MAXN*MAXM];
 #endif
   void PrintNormal(FILE* f) const;
+  void PrintLaTeX(FILE* f) const;
   void PrintMatrix(FILE* f) const;
 #ifdef USE_LINES_NO_MAP
   void PrintMatrixSorted(FILE* f) const;

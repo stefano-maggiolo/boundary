@@ -21,9 +21,6 @@ class TextGraphPrinter : public GraphPrinter
   void EndPrint(void);
 
  private:
-  // Print Text header, body (of the current graph) and footer to cout.
-  void print_middle(Graph *graph, bool level_by_vertices);
-
   FILE* file;
   int printOnlyCodim;
   int G, M;

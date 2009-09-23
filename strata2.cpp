@@ -28,7 +28,6 @@ int
 main(int argc, char* argv[])
 {
   int g, n, codim;
-  int ret;
   enum Printer printer;
   enum Statistics statistics;
     
@@ -42,6 +41,7 @@ main(int argc, char* argv[])
     P = new LaTeXGraphPrinter(stdout, g, n);
   else if (printer == Text)
     P = new TextGraphPrinter(stdout, g, n);
+  //TODO else P = new NullGraphPrinter(stdout, g, n);
   c.Compute(*P, statistics, codim);
 
   return 0;
@@ -147,7 +147,7 @@ ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printe
 void
 PrintCompilationFlags(void)
 {
-  static char r[] = "$Rev: 6 $";
+  static char r[] = "$Rev$";
   int l = strlen(r);
   r[l-2] = '\0';
   fprintf(stderr, "Compilation flags: ");

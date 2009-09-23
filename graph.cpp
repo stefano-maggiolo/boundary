@@ -79,6 +79,52 @@ Graph::PrintNormal(FILE* f) const
 }
 
 void
+Graph::PrintLaTeX(FILE* f) const
+{
+  fprintf(f, "    \\begin{tikzpicture}[baseline]\n");
+  fprintf(f, "      \\path(0,0) ellipse (2 and %d);\n", (K>2? 2: 1));
+  
+  for (int i = 0; i < K; i++)
+    {
+      // The following parameter is decorative: it is used to center the position of the marked point when it is only one.
+      int param=0;
+      int param2=0;
+      int inutile=0;
+      (m[i]==1)?param=30:param=0;
+      K==1?param2=30:param2=0;
+      if (m[i]!=0 && a[i][i] !=0)
+        fprintf(f, "      \\tikzstyle{level 1}=[counterclockwise from=%d,level distance=9mm,sibling angle=%d]\n", -120+360*i/K+2*param-param2, (m[i]==1?0: (60+2*param2)/(m[i]-1)));
+      (m[i]==1 && K==1)? inutile = 30:inutile=0;
+      if (m[i]!=0 && a[i][i] ==0)
+        fprintf(f, "      \\tikzstyle{level 1}=[counterclockwise from=%d,level distance=9mm,sibling angle=%d]\n", -60+360*i/K+2*param-param2+inutile, (m[i]==1?0: (120+8*param2)/(m[i]-1)));;
+      fprintf(f, "      \\node (A%d) at (%d:1) {$\\scriptstyle{%d_{%d}}$}", i, (360 * i / K), g[i], m[i]);	
+      for (int j= 0; j< m[i]; j++)
+        fprintf(f, " child");
+      fprintf(f, ";\n");
+    }
+  fprintf(f, "\n");	
+
+  for (int i = 0; i < K; i++)
+    for (int j = 0; j < a[i][i]; j++)
+      {
+        int param=0;
+        K==1?param=2:param=0;
+        if (m[i]!=0)
+          fprintf(f, "      \\draw (A%d) .. controls +(%lf:1.2) and +(%lf:1.2) .. (A%d);\n", i, ((j - a[i][i]/2.0+1+param) * 30 + (360*i/K)), ((j - a[i][i]/2.0 + 2+param) * 30 + (360*i/K)), i);
+        else
+          fprintf(f, "      \\draw (A%d) .. controls +(%lf:1.2) and +(%lf:1.2) .. (A%d);\n", i, ((j - a[i][i]/2.0) * 30 + (360*i/K)), ((j - a[i][i]/2.0 + 1) * 30 + (360*i/K)), i);
+      }
+
+  for (int i = 0; i < K; i++)
+    for (int j = i+1; j < K; j++)
+      for (int k = 0; k < a[i][j]; k++)
+        fprintf(f, "      \\path (A%d) edge [bend left=%lf] (A%d);\n", i, ((k - a[i][j]/2.0) * 30+15), j);
+
+  
+  fprintf(f, "    \\end{tikzpicture}\n");
+}
+
+void
 Graph::PrintPretty(FILE* f, int d, int r, const vector< bool >& divis,
                    int start, int end) const
 {
@@ -410,61 +456,37 @@ Graph::PermutationOk(Graph& g2, vector< int >& perm)
 void
 Graph::ComputeDreadnaut(void)
 {
-  vector< int > translate(K, -1);
   vector< vector< int > > translateEdges(K, vector< int >(K, -1));
 
   graph simple[MAXN*MAXM];
   int ptn[MAXN];
   
-  int maxg=0, maxm=0, maxl=0, maxa=0;
+  int maxa = 0;
   
   for (int i = 0; i < K; ++i)
-    {
-      if (maxg < g[i]) maxg = g[i];
-      if (maxm < m[i]) maxm = m[i];
-      if (maxl < l[i]) maxl = l[i];
-      for (int j = i+1; j < K; ++j)
-        if (maxa < a[i][j]) maxa = a[i][j];
-    }
-  // Resulting simple graph of nautyK >= (maxg+1)(maxm+1)(maxa+1) +
-  // maxa-2 and that number of partitions
+    for (int j = i+1; j < K; ++j)
+      if (maxa < a[i][j]) maxa = a[i][j];
 
   // Build translation table for vertices and edges
-  nautyK = 0;
-  for (int ig = 0; ig <= maxg; ++ig)
-    for (int im = 0; im <= maxm; ++im)
-      for (int il = 0; il <= maxl; ++il)
-        {
-          bool found = false;
-          for (int i = 0; i < K; ++i)
-            if (g[i] == ig && m[i] == im && l[i] == il)
-              {
-                found = true;
-                translate[i] = nautyK;
-                ptn[nautyK] = 1;
-                ++nautyK;
-              }
-          // Add a fake vertex to preserve colouring.
-          // Not needed if we compare before g,m,l
-          //  and use something in USE_DEGREES_*.
-          //if (!found) ++nautyK;
-          ptn[nautyK-1] = 0;
-        }
+  nautyK = K;
+  ptn[K-1] = 0;
+  for (int i = 0; i < K-1; ++i)
+    if (g[i] != g[i+1] || m[i] != m[i+1] || l[i] != l[i+1])
+      ptn[i] = 0;
+    else
+      ptn[i] = 1;
+
   for (int ia = 2; ia <= maxa; ++ia)
     {
-      bool found = false;
       for (int i = 0; i < K; ++i)
         for (int j = i+1; j < K; ++j)
           if (ia == a[i][j])
             {
-              found = true;
               translateEdges[i][j] = nautyK;
               translateEdges[j][i] = nautyK;
               ptn[nautyK] = 1;
               ++nautyK;
             }
-      // Same as before.
-      //if (!found) ++nautyK;
       ptn[nautyK-1] = 0;
     }
   assert(nautyK < MAXN);
@@ -479,12 +501,12 @@ Graph::ComputeDreadnaut(void)
   
   for (int i = 0; i < K; ++i)
     {
-      set* nautyRow = GRAPHROW(simple, translate[i], nautyM);
+      set* nautyRow = GRAPHROW(simple, i, nautyM);
       for (int j = 0; j < K; ++j)
         if (i != j)
           {
             if (a[i][j] == 1)
-              ADDELEMENT(nautyRow, translate[j]);
+              ADDELEMENT(nautyRow, j);
             else if (a[i][j] > 1)
               ADDELEMENT(nautyRow, translateEdges[i][j]);
           }
@@ -494,8 +516,8 @@ Graph::ComputeDreadnaut(void)
       if (a[i][j] > 1)
         {
           set* nautyRow = GRAPHROW(simple, translateEdges[i][j], nautyM);
-          ADDELEMENT(nautyRow, translate[i]);
-          ADDELEMENT(nautyRow, translate[j]);
+          ADDELEMENT(nautyRow, i);
+          ADDELEMENT(nautyRow, j);
         }
 
   // Computing canonical labelling
@@ -506,7 +528,6 @@ Graph::ComputeDreadnaut(void)
   options.defaultptn = FALSE;
   setword ws[50*MAXM];
   statsblk stats;
-  graph rg[MAXN*MAXM];
 
   assert(nautyK < MAXN);
   nauty_check(WORDSIZE, nautyM, nautyK, NAUTYVERSIONID);
