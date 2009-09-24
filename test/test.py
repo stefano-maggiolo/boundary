@@ -138,6 +138,7 @@ hard = [
     # K=9 C=11
     (6,0), # K=10 C=15
     ]
+easy += hard
 
 # Utility functions
 
@@ -557,7 +558,7 @@ def plotSM():
                 s = [max(p[x][gn]["memory"]) for gn in xAxis[i]]
                 seriesM[i].append(s)
             legend.append(compressFlags(x))
-    exit(0)
+
     for i in range(numPlots):
         plot(xAxis[i], seriesS[i], "plot_%d_time_log.png" % i,
              title = "Time (log(ms))", legend = legend)

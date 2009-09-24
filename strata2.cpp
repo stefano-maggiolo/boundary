@@ -41,7 +41,10 @@ main(int argc, char* argv[])
     P = new LaTeXGraphPrinter(stdout, g, n);
   else if (printer == Text)
     P = new TextGraphPrinter(stdout, g, n);
-  //TODO else P = new NullGraphPrinter(stdout, g, n);
+  else if (printer == Binary)
+    P = new BinaryGraphPrinter(stdout, g, n);
+  else if (printer == Null)
+    P = new NullGraphPrinter(stdout, g, n);
   c.Compute(*P, statistics, codim);
 
   return 0;
@@ -51,8 +54,10 @@ void
 QuitWithUsage(char* name)
 {
   fprintf(stderr, "Usage:\n\t%s [-P L|T] [-S F|T|N] [-C C] genus [marked_points]\n", name);
-  fprintf(stderr, "\t\t-P T: print graphs in LaTeX (default)\n");
-  fprintf(stderr, "\t\t-P L: print graphs in text format\n");
+  fprintf(stderr, "\t\t-P L: print graphs in LaTeX (default)\n");
+  fprintf(stderr, "\t\t-P T: print graphs in text format\n");
+  fprintf(stderr, "\t\t-P B: print graphs in binary format\n");
+  fprintf(stderr, "\t\t-P N: do not print graphs\n");
   fprintf(stderr, "\t\t\n");
   fprintf(stderr, "\t\t-S F: print full statistics (default)\n");
   fprintf(stderr, "\t\t-S T: print terse statistics\n");
@@ -97,6 +102,10 @@ ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printe
                     printer = LaTeX;
                   else if (argv[i+1][0] == 'T')
                     printer = Text;
+                  else if (argv[i+1][0] == 'B')
+                    printer = Binary;
+                  else if (argv[i+1][0] == 'N')
+                    printer = Null;
                   else
                     QuitWithUsage(argv[0]);
                   ++i;

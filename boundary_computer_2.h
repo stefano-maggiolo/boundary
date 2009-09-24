@@ -9,10 +9,13 @@
 #include <vector>
 #include <algorithm>
 #include <cstdio>
-#include <sys/time.h>
-#include <sys/resource.h>
 #include <cstring>
 #include <unistd.h>
+
+#ifdef HAVE_GETRUSAGE
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif
 
 //enum Statistics { Full, Terse, No };
 

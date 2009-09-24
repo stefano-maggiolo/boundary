@@ -79,6 +79,36 @@ Graph::PrintNormal(FILE* f) const
 }
 
 void
+Graph::PrintBinary(FILE* f) const
+{
+  unsigned char tmp;
+  tmp = (unsigned char) K;
+  fwrite(&tmp, sizeof(unsigned char), 1, f);
+
+  for (int i = 0; i < K; ++i)
+    {
+      tmp = (unsigned char) g[i];
+      fwrite(&tmp, sizeof(unsigned char), 1, f);
+    }
+  for (int i = 0; i < K; ++i)
+    {
+      tmp = (unsigned char) m[i];
+      fwrite(&tmp, sizeof(unsigned char), 1, f);
+    }
+  for (int i = 0; i < K; ++i)
+    {
+      tmp = (unsigned char) l[i];
+      fwrite(&tmp, sizeof(unsigned char), 1, f);
+    }
+  for (int i = 0; i < K; ++i)
+    for (int j = i+1; j < K; ++j)
+      {
+        tmp = (unsigned char) a[i][j];
+        fwrite(&tmp, sizeof(unsigned char), 1, f);
+      }
+}
+
+void
 Graph::PrintLaTeX(FILE* f) const
 {
   fprintf(f, "    \\begin{tikzpicture}[baseline]\n");
