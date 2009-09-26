@@ -27,12 +27,6 @@ BoundaryComputer::GetAllResultsByCodimension(void)
 }
 
 void
-BoundaryComputer::SaveAllResults(const char *filename)
-{
-  return;
-}
-
-void
 BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int computeOnlyCodim)
 {
   statistics.assign(3*G-3+M+1, 0);
@@ -56,7 +50,7 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
   graph.K = 1;
 
   if (stats == Full) fprintf(stderr, "K = %2d... ", graph.K);
-#ifdef HAVE_GETRUSAGE
+#if HAVE_GETRUSAGE
   struct rusage rusageBegin, rusageEnd;
   getrusage(RUSAGE_SELF, &rusageBegin);
 #endif
@@ -77,13 +71,13 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
         }
     }
 
-#ifdef HAVE_GETRUSAGE
+#if HAVE_GETRUSAGE
   getrusage(RUSAGE_SELF, &rusageEnd);
   statisticsTime[graph.K] = ((rusageEnd.ru_utime.tv_sec -
                               rusageBegin.ru_utime.tv_sec)*1000 +
                              (rusageEnd.ru_utime.tv_usec -
                               rusageBegin.ru_utime.tv_usec)/1000);
-#ifdef HAVE_MAXRSS
+#if HAVE_MAXRSS
   statisticsMemory[graph.K] = rusageEnd.ru_maxrss;
 #else
   statisticsMemory[graph.K] = 0;
@@ -102,14 +96,14 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
     }
   fclose(memoryFile);
 #endif
-  if (stats== Full)
+  if (stats == Full)
     fprintf(stderr, "done in %3d.%01d s, using %4d.%01d MB.\n",
             statisticsTime[graph.K] / 1000,
             statisticsTime[graph.K] / 100 % 10,
             statisticsMemory[graph.K] / 1024,
             statisticsMemory[graph.K] / 102 % 10);
 #else
-  if (stats== Full)
+  if (stats == Full)
     fprintf(stderr, "done.\n"),
 #endif
         
@@ -124,8 +118,8 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
     {
       if (computeOnlyCodim != -1 && graph.K > computeOnlyCodim + 1) break;
 
-      if (stats== Full) fprintf(stderr, "K = %2d... ", graph.K);
-#ifdef HAVE_GETRUSAGE
+      if (stats == Full) fprintf(stderr, "K = %2d... ", graph.K);
+#if HAVE_GETRUSAGE
       getrusage(RUSAGE_SELF, &rusageBegin);
 #endif
       
@@ -153,13 +147,13 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
       // Let's start.
       bt_g(0);
 
-#ifdef HAVE_GETRUSAGE
+#if HAVE_GETRUSAGE
       getrusage(RUSAGE_SELF, &rusageEnd);
       statisticsTime[graph.K] = ((rusageEnd.ru_utime.tv_sec -
                                   rusageBegin.ru_utime.tv_sec)*1000 +
                                  (rusageEnd.ru_utime.tv_usec -
                                   rusageBegin.ru_utime.tv_usec)/1000);
-#ifdef HAVE_MAXRSS
+#if HAVE_MAXRSS
       statisticsMemory[graph.K] = rusageEnd.ru_maxrss;
 #else
       statisticsMemory[graph.K] = 0;
@@ -614,7 +608,7 @@ BoundaryComputer::Statistics(FILE* file)
       return;
     }
 
-#ifdef HAVE_GETRUSAGE
+#if HAVE_GETRUSAGE
   int ms = 0;
   for (int i = 0; i < statisticsTime.size(); i++)
     ms += statisticsTime[i];

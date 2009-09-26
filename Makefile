@@ -54,12 +54,15 @@ HEADERS = $(wildcard *.h)
 #     to a node with different genus, number of marked points, number
 #     of loops, then the graphs cannot be isomorphic.
 
-#   USE_NAUTY (default=yes
+#   USE_NAUTY (default=yes)
 
 #     Use nauty to check if two graphs are isomorphic.
 
-FLAGS = -O2 -DUSE_NAUTY -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP 
+CPPFLAGS = -O2 -DHAVE_GETRUSAGE=1 -DHAVE_MAXRSS=0
+STRATAFLAGS = -O2 -DUSE_NAUTY -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP
 #FLAGS = -O2 -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP -llapackpp -DSTART_LAPACK_COMPUTATION=9
+
+FLAGS = $(CPPFLAGS) $(STRATAFLAGS)
 
 all: strata2
 

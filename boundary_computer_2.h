@@ -3,7 +3,7 @@
 
 #include "graph.h"
 #include "graph_printer.h"
-#include "boundary_computer.h"
+#include "computer.h"
 
 #include <map>
 #include <vector>
@@ -12,7 +12,7 @@
 #include <cstring>
 #include <unistd.h>
 
-#ifdef HAVE_GETRUSAGE
+#if HAVE_GETRUSAGE
 #include <sys/time.h>
 #include <sys/resource.h>
 #endif
@@ -27,7 +27,6 @@ class BoundaryComputer2
   BoundaryComputer2(int g, int n);
   vector< Graph >& GetAllResults(void);
   map< int, vector< Graph > >& GetAllResultsByCodimension(void);
-  void SaveAllResults(const char *filename);
   void Compute(GraphPrinter &printer, enum Statistics stat, int computeOnlyCodim);
   void Compute(GraphPrinter &printer, enum Statistics stat);
   void Compute(GraphPrinter &printer);

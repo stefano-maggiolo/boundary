@@ -9,6 +9,8 @@
 
 using namespace std;
 
+enum Printer { LaTeX, Text, Binary, Null };
+
 class GraphPrinter
 {
  public:

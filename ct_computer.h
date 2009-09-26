@@ -1,5 +1,5 @@
-#ifndef BOUNDARY_COMPUTER_H
-#define BOUNDARY_COMPUTER_H
+#ifndef CT_COMPUTER_H
+#define CT_COMPUTER_H
 
 #include "graph.h"
 #include "graph_printer.h"
@@ -19,10 +19,10 @@
 
 using namespace std;
 
-class BoundaryComputer: public Computer
+class CTComputer
 {
  public:
-  BoundaryComputer(int g, int n);
+  CTComputer(int g, int n);
   vector< Graph >& GetAllResults(void);
   map< int, vector< Graph > >& GetAllResultsByCodimension(void);
   void Compute(GraphPrinter &printer, enum Statistics stat, int computeOnlyCodim);
