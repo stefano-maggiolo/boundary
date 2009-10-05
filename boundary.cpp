@@ -15,7 +15,7 @@
   along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-#include "strata2.h"
+#include "boundary.h"
 
 using namespace std;
 

@@ -1,3 +1,25 @@
+/*
+  Binary format specifications (for small graph, with chars instead of
+  ints):
+
+  A graph is composed of:
+
+  Type    | B    | Repetitions   | Meaning
+  uchar   | 1    | 1             | K (valid from 1)
+  uchar   | 1    | K             | g (from 0 to K-1)
+  uchar   | 1    | K             | m (from 0 to K-1)
+  uchar   | 1    | K             | l (from 0 to K-1)
+  uchar   | 1    | (K-2)*(K-1)/2 | a (row by row)
+  Tot: (K^2 + 3 K + 4) / 2 bytes
+
+  A file is composed of:
+
+  Type    | B    | Repetitions   | Meaning
+  uchar   | 1    | 1             | Magic (0)
+  Graph   | ...  | #             | the graphs
+  uchar   | 1    | 1             | Endoffile (0)
+*/
+
 #ifndef GRAPH_H
 #define GRAPH_H
 
@@ -24,9 +46,9 @@ using namespace std;
 class Graph
 {
  public:
-  Graph(void);
-  Graph(int G, int M, int K);
+  Graph(int g = -1, int n = -1, int k = -1);
   Graph(const Graph& graph);
+  Graph(FILE* f); // Binary constructor
 
   const vector< int >& GetDivisions(void) const;
   bool Equal(Graph& g2);
@@ -37,7 +59,6 @@ class Graph
   bool EqualNauty(Graph& g2);
 #endif
   bool EqualPermutations(Graph& g2);
-  bool operator==(const Graph& g2);
 
   // FUNDAMENTAL
   // Arithmetic genus of the curve.
@@ -97,12 +118,12 @@ class Graph
   int nautyK, nautyM;
   graph nautyGraph[MAXN*MAXM];
 #endif
-  void PrintNormal(FILE* f) const;
+  void PrintNormal(FILE* f = stderr) const;
   void PrintBinary(FILE* f) const;
-  void PrintLaTeX(FILE* f) const;
-  void PrintMatrix(FILE* f) const;
+  void PrintLaTeX(FILE* f = stdout) const;
+  void PrintMatrix(FILE* f = stderr) const;
 #ifdef USE_LINES_NO_MAP
-  void PrintMatrixSorted(FILE* f) const;
+  void PrintMatrixSorted(FILE* f = stderr) const;
 #endif
   void PrintPretty(FILE* f, int d, int r, const vector< bool >& divis,
                    int start, int end) const;
@@ -118,8 +139,7 @@ class Graph
 #endif
   vector< int > simple_divisions;
 
-  
- private:
+ protected:
   bool NextSpecialPerm(vector< int >& perm);
 };
 
@@ -134,7 +154,7 @@ class GraphCollection
   vector< Graph > GetCTGraphs(int c);
   vector< Graph > GetCTGraphsOfCodimension(int c);
 
- private:
+ protected:
   map< int, vector< Graph > > graphs;
 };
 

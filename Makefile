@@ -1,4 +1,4 @@
-EXECUTABLES = strata2
+EXECUTABLES = boundary boundary2ordered
 SOURCES = $(wildcard *.cpp)
 OBJECTS = $(patsubst %.cpp, %.o, $(SOURCES))
 HEADERS = $(wildcard *.h)

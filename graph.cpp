@@ -190,18 +190,11 @@ Graph::PrintPretty(FILE* f, int d, int r, const vector< bool >& divis,
   fprintf(f, "\n");
 }
 
-Graph::Graph()
-{
-#ifdef USE_NAUTY
-  this->nautyK = -1;
-#endif
-}
-
 Graph::Graph(int g, int n, int k)
+  : G(g),
+    M(n),
+    K(k)
 {
-  this->G = g;
-  this->M = n;
-  this->K = k;
 #ifdef USE_NAUTY
   this->nautyK = -1;
 #endif
@@ -251,6 +244,47 @@ Graph::Graph(const Graph& g2)
 #endif
 }
 
+Graph::Graph(FILE* f)
+{
+  unsigned char tmp;
+  
+  assert(fread(&tmp, sizeof(unsigned char), 1, f) == 1);
+  K = tmp;
+
+  G = -K+1;
+  for (int i = 0; i < K; ++i)
+    {
+      assert(fread(&tmp, sizeof(unsigned char), 1, f) == 1);
+      g[i] = tmp;
+      G += tmp;
+    }
+
+  M = 0;
+  for (int i = 0; i < K; ++i)
+    {
+      assert(fread(&tmp, sizeof(unsigned char), 1, f) == 1);
+      m[i] = tmp;
+      M += tmp;
+    }
+
+  for (int i = 0; i < K; ++i)
+    {
+      assert(fread(&tmp, sizeof(unsigned char), 1, f) == 1);
+      a[i][i] = l[i] = tmp;
+      G += tmp;
+    }
+
+  for (int i = 0; i < K; ++i)
+    for (int j = i+1; j < K; ++j)
+      {
+        assert(fread(&tmp, sizeof(unsigned char), 1, f) == 1);
+        a[i][j] = a[j][i] = tmp;
+        G += tmp;
+      }
+
+  nautyK = -1;
+}
+
 void
 Graph::ComputeDivisions(void)
 {
@@ -282,8 +316,8 @@ Graph::ComputeEigenvalues(void)
 }
 #endif
 
-inline bool
-Graph::NextSpecialPerm(vector< int >&perm)
+bool
+Graph::NextSpecialPerm(vector< int >& perm)
 {
   vector< int >::iterator i = simple_divisions.end() - 1;
   vector< int >::iterator b = perm.end(), e;

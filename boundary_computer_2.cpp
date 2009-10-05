@@ -167,7 +167,7 @@ BoundaryComputer2::Compute(GraphPrinter &printer, enum Statistics stats, int com
              ++s)
           {
             fprintf(stderr, "From the following graph weobtain...\n");
-            s->PrintNormal(stderr);
+            s->PrintNormal();
             bt_g(*s, 0, 0);
           }
       
@@ -548,7 +548,7 @@ BoundaryComputer2::bt_m(Graph& g, int k, int prev)
 void
 BoundaryComputer2::addToStore(const Graph& g)
 {
-  g.PrintNormal(stderr);
+  g.PrintNormal();
   Graph *ng = new Graph(g);
   store[ng->total_edges].push_back(*ng);
 }
