@@ -1,7 +1,6 @@
+EXECUTABLES = strata2
 SOURCES = $(wildcard *.cpp)
-CSOURCES = $(wildcard *.c)
 OBJECTS = $(patsubst %.cpp, %.o, $(SOURCES))
-COBJECTS = $(patsubst %.c, %.o, $(CSOURCES))
 HEADERS = $(wildcard *.h)
 
 # Flags available:
@@ -58,22 +57,37 @@ HEADERS = $(wildcard *.h)
 
 #     Use nauty to check if two graphs are isomorphic.
 
+NAUTYOBJECTS = ./nauty/nauty.o ./nauty/nautil.o ./nauty/naugraph.o ./nauty/naututil.o ./nauty/rng.o
+
 CPPFLAGS = -O2 -DHAVE_GETRUSAGE=1 -DHAVE_MAXRSS=0
-STRATAFLAGS = -O2 -DUSE_NAUTY -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP
-#FLAGS = -O2 -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP -llapackpp -DSTART_LAPACK_COMPUTATION=9
+STRATAFLAGS = -DUSE_NAUTY -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP
+#BOUNDARYFLAGS = -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP -llapackpp -DSTART_LAPACK_COMPUTATION=9
 
-FLAGS = $(CPPFLAGS) $(STRATAFLAGS)
+-include depend
 
-all: strata2
+all: $(EXECUTABLES)
+
+boundary: $(OBJECTS) depend
+	g++ -o boundary $(OBJECTS) $(CPPFLAGS) $(STRATAFLAGS) $(NAUTYOBJECTS)
+
+boundary2ordered: $(OBJECTS) depend
+	g++ -o boundary $(OBJECTS) $(CPPFLAGS) $(STRATAFLAGS) $(NAUTYOBJECTS)
 
 %.o: %.cpp $(HEADERS)
-	g++ -c -o $*.o $*.cpp $(FLAGS)
+	g++ -c -o $*.o $*.cpp $(CPPFLAGS) $(STRATAFLAGS)
 
+depend: $(SOURCES)
+	g++ -MM $(CPPFLAGS) $(STRATAFLAGS) $^ > $@
+
+.PHONY: clean
 clean:
-	rm -f $(OBJECTS) strata2
+	rm -f $(OBJECTS) $(EXECUTABLES) strata2.tar.gz
 
-strata2: $(OBJECTS) $(HEADERS)
-	g++ -o strata2 $(OBJECTS) $(FLAGS) ./nauty/nauty.o ./nauty/nautil.o ./nauty/naugraph.o ./nauty/naututil.o ./nauty/rng.o
+.PHONY: clean_depend
+clean_depend: clean
+	rm -f depend
 
+.PHONY: backup
 backup:
 	tar cf strata2.tar.gz ./
+
