@@ -1,7 +1,13 @@
-EXECUTABLES = boundary boundary2ordered
-SOURCES = $(wildcard *.cpp)
-OBJECTS = $(patsubst %.cpp, %.o, $(SOURCES))
-HEADERS = $(wildcard *.h)
+EXES = boundary boundary2ordered
+SRCS = $(wildcard *.cpp)
+OBJS = $(patsubst %.cpp, %.o, $(SRCS))
+PRINTEROBJS = binary_graph_printer.o latex_graph_printer.o text_graph_printer.o
+READEROBJS = binary_graph_reader.o
+COMPUTEROBJS = boundary_computer.o boundary_computer_2.o ct_computer.o
+BOUNDARYOBJS = boundary.o graph.o $(PRINTEROBJS) $(READEROBJS) $(COMPUTEROBJS)
+BOUNDARY2ORDEREDOBJS = boundary2ordered.o graph.o $(PRINTEROBJS) $(READEROBJS) $(COMPUTEROBJS)
+NAUTYOBJS = ./nauty/nauty.o ./nauty/nautil.o ./nauty/naugraph.o ./nauty/naututil.o ./nauty/rng.o
+HDRS = $(wildcard *.h)
 
 # Flags available:
 
@@ -57,37 +63,33 @@ HEADERS = $(wildcard *.h)
 
 #     Use nauty to check if two graphs are isomorphic.
 
-NAUTYOBJECTS = ./nauty/nauty.o ./nauty/nautil.o ./nauty/naugraph.o ./nauty/naututil.o ./nauty/rng.o
-
 CPPFLAGS = -O2 -DHAVE_GETRUSAGE=1 -DHAVE_MAXRSS=0
 STRATAFLAGS = -DUSE_NAUTY -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP
 #BOUNDARYFLAGS = -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP -llapackpp -DSTART_LAPACK_COMPUTATION=9
 
+all: $(EXES)
+
 -include depend
 
-all: $(EXECUTABLES)
+boundary: $(BOUNDARYOBJS) depend
+	g++ -o boundary $(BOUNDARYOBJS) $(CPPFLAGS) $(STRATAFLAGS) $(NAUTYOBJS)
 
-boundary: $(OBJECTS) depend
-	g++ -o boundary $(OBJECTS) $(CPPFLAGS) $(STRATAFLAGS) $(NAUTYOBJECTS)
+boundary2ordered: $(BOUNDARY2ORDEREDOBJS) depend
+	g++ -o boundary2ordered $(BOUNDARY2ORDEREDOBJS) $(CPPFLAGS) $(STRATAFLAGS) $(NAUTYOBJS)
 
-boundary2ordered: $(OBJECTS) depend
-	g++ -o boundary $(OBJECTS) $(CPPFLAGS) $(STRATAFLAGS) $(NAUTYOBJECTS)
-
-%.o: %.cpp $(HEADERS)
+%.o: %.cpp $(HDRS)
 	g++ -c -o $*.o $*.cpp $(CPPFLAGS) $(STRATAFLAGS)
 
-depend: $(SOURCES)
+depend: $(SRCS)
 	g++ -MM $(CPPFLAGS) $(STRATAFLAGS) $^ > $@
 
-.PHONY: clean
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLES) strata2.tar.gz
+	rm -f $(OBJS) $(EXES) strata2.tar.gz
 
-.PHONY: clean_depend
 clean_depend: clean
 	rm -f depend
 
-.PHONY: backup
 backup:
 	tar cf strata2.tar.gz ./
 
+.PHONY: clean clean_depend backup all

@@ -53,7 +53,7 @@ main(int argc, char* argv[])
 void
 QuitWithUsage(char* name)
 {
-  fprintf(stderr, "Usage:\n\t%s [-P L|T] [-S F|T|N] [-C C] genus [marked_points]\n", name);
+  fprintf(stderr, "Usage:\n\t%s [-P L|T|B|N] [-S F|T|N] [-C C] genus [marked_points]\n", name);
   fprintf(stderr, "\t\t-P L: print graphs in LaTeX (default)\n");
   fprintf(stderr, "\t\t-P T: print graphs in text format\n");
   fprintf(stderr, "\t\t-P B: print graphs in binary format\n");
@@ -71,15 +71,16 @@ int
 ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printer& printer, enum Statistics& statistics)
 {
   // Check command line arguments
-  codim = -1;
-  if (argc < 3)
+  if (argc < 2)
     QuitWithUsage(argv[0]);
   else
     {
       bool def_g = false, def_n = false;
       printer = LaTeX; // default
       statistics = Full; // default
+      codim = -1; //default
       n = 0; // default
+      g = -1;
       for (int i = 1; i < argc; ++i)
         {
           if (argv[i][0] == '-')
@@ -144,7 +145,8 @@ ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printe
             }
         }
     }
-
+  if (g == -1)
+    QuitWithUsage(argv[0]);
   if (2*g-3+n < 0)
     {
       fprintf(stderr, "Stability condition not verified! Try with 2g+n-3 non-negative!\n");
