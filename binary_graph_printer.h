@@ -21,7 +21,7 @@
   uchar   | 1    | 1             | Magic (0)
   Graph   | ...  | #             | the graphs
   uchar   | 1    | 1             | Endoffile (0)
-  
+
   TODO: binary format for decorated graphs (magic=1?)
 */
 

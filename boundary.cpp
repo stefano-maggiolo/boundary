@@ -1,11 +1,11 @@
 /*
   Copyright (c) 2009, Stefano Maggiolo and Nicola Pagani.
-  
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   This program is distributed in the hope that it will be useful, but
   WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
@@ -30,9 +30,9 @@ main(int argc, char* argv[])
   int g, n, codim;
   enum Printer printer;
   enum Statistics statistics;
-    
+
   ParseCommandLine(argc, argv, g, n, codim, printer, statistics);
-  
+
   PrintCompilationFlags();
 
   BoundaryComputer c(g, n);

@@ -54,7 +54,7 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
   struct rusage rusageBegin, rusageEnd;
   getrusage(RUSAGE_SELF, &rusageBegin);
 #endif
-  
+
   for (int n = 0; n <= graph.G; n++)
     {
       tried[1]++;
@@ -106,12 +106,12 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
   if (stats == Full)
     fprintf(stderr, "done.\n"),
 #endif
-        
+
   printer.PrintSomeGraph(store);
   for (map< int, vector< Graph > >::iterator s = store.begin(); s != store.end(); ++s)
     statistics[s->first] += s->second.size();
   store.clear();
-  
+
   // We have at most 2G-2+M components for a curve of genus G and M
   // marked points.
   for (graph.K = 2; graph.K <= 2*graph.G-2+graph.M; graph.K++)
@@ -122,7 +122,7 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
 #if HAVE_GETRUSAGE
       getrusage(RUSAGE_SELF, &rusageBegin);
 #endif
-      
+
       // Every time, we rebuild the adjacency matrix with the right
       // dimension.
       graph.a.assign(graph.K, vector< int >(graph.K, 0));
@@ -182,7 +182,7 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
       if (stats == Full)
         fprintf(stderr, "done.\n");
 #endif
-      
+
       printer.PrintSomeGraph(store);
       for (map< int, vector< Graph > >::iterator s = store.begin(); s != store.end(); ++s)
         statistics[s->first] += s->second.size();
@@ -251,7 +251,7 @@ BoundaryComputer::bt_m(int i)
 {
   if (i < graph.K) // We have to assign m[i].
 	{
-	// We impose the vector m to be non-decreasing for i's 
+	// We impose the vector m to be non-decreasing for i's
 	// such that the genus is equal, to avoid generating isomorphic graphs.
       int start = divisions[i]? 0: graph.m[i-1];
 	// m[i] is always smaller or equal than M-msum.
@@ -352,7 +352,7 @@ BoundaryComputer::bt_a(int i, int j)
       (graph.simple_divisions[currentDivisionJ+1] == j))
   currentDivisionJ++;
 #endif
-  
+
   if (i < graph.K-1) // We have to assign a[i][j].
     {
 
@@ -424,7 +424,7 @@ BoundaryComputer::bt_a(int i, int j)
           if (n > start_j && j > i+1) divisions[j] = true;
           graph.sum += n;
           int tmpI = currentDivisionI, tmpJ = currentDivisionJ;
-          
+
           bt_a(i, j+1);
 
           // We go back to the previous situation.
@@ -468,7 +468,7 @@ BoundaryComputer::bt_a(int i, int j)
             if (iter != i)
               ++tmp[graph.a[i][iter]];
           ++graph.lines[currentDivisionI][tmp];
-#endif          
+#endif
 #ifdef USE_LINES_NO_MAP
           graph.aSorted = graph.a;
           for (int iter = 0; iter < graph.K; ++iter)
@@ -516,7 +516,7 @@ BoundaryComputer::bt_a(int i, int j)
           // won't be used, but they are with K = 3.
           graph.nautyK = -1;
 #endif
-          
+
           if (correct()) add_to_store();
 
 #ifdef USE_LINES_MAP
@@ -525,7 +525,7 @@ BoundaryComputer::bt_a(int i, int j)
             graph.lines[currentDivisionI].erase(tmp);
 #endif
         }
-    }  
+    }
 }
 
 void
@@ -618,7 +618,7 @@ BoundaryComputer::Statistics(FILE* file)
     if (kB < statisticsMemory[i]) kB = statisticsMemory[i];
   fprintf(file, "Total memory: %d.%01d MB.\n", kB/1024, kB/102 % 10);
 #endif
-  
+
   int s = 0;
   fprintf(file, "Tried       ");
   for (int i = 0; i < tried.size(); i++)

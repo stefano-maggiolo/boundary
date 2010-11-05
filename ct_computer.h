@@ -30,7 +30,7 @@ class CTComputer
   void Compute(GraphPrinter &printer);
   void Statistics(FILE* file);
   void TerseStatistics(FILE* file);
-  
+
  private:
   //Backtracking functions: g for genera, m for marked points, l for loops, a for edges
   void bt_g(int i);

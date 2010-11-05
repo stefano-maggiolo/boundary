@@ -19,7 +19,7 @@ Graph2GraphOrderedPointsBT(int x,
               Graph2GraphOrderedPointsBT(x+1, c, h, ret);
               ++c[i->first];
             }
-          
+
         }
     }
   else
@@ -66,7 +66,7 @@ GraphOrderedPoints::GraphOrderedPoints(const GraphOrderedPoints& g2)
 GraphOrderedPoints::GraphOrderedPoints(FILE* f)
 {
   unsigned char tmp;
-  
+
   assert(fread(&tmp, sizeof(unsigned char), 1, f) == 1);
   K = tmp;
 
@@ -159,12 +159,12 @@ GraphOrderedPoints::ComputeDreadnaut(void)
 {
   vector< vector< int > > translateEdges(K, vector< int >(K, -1));
   vector< int > translateMarkedPoints(M, -1);
-  
+
   graph simple[MAXN*MAXM];
   int ptn[MAXN];
-  
+
   int maxa = 0;
-  
+
   for (int i = 0; i < K; ++i)
     for (int j = i+1; j < K; ++j)
       if (maxa < a[i][j]) maxa = a[i][j];
@@ -183,7 +183,7 @@ GraphOrderedPoints::ComputeDreadnaut(void)
       translateMarkedPoints[i] = nautyK++;
       ptn[nautyK-1] = 0;
     }
-  
+
   for (int ia = 2; ia <= maxa; ++ia)
     {
       for (int i = 0; i < K; ++i)
@@ -206,7 +206,7 @@ GraphOrderedPoints::ComputeDreadnaut(void)
       set* nautyRow = GRAPHROW(simple, i, nautyM);
       EMPTYSET(nautyRow, nautyM);
     }
-  
+
   for (int i = 0; i < K; ++i)
     {
       set* nautyRow = GRAPHROW(simple, i, nautyM);
@@ -262,20 +262,20 @@ GraphOrderedPoints::EqualNauty(GraphOrderedPoints& g2)
   if (g2.nautyK == -1) g2.ComputeDreadnaut();
 
   if (nautyK != g2.nautyK) return false;
-  
+
   bool ret = (memcmp(nautyGraph, g2.nautyGraph, nautyK*nautyM*sizeof(graph)) == 0);
 
   return ret;
 }
 #endif
-  
+
 bool
 GraphOrderedPoints::EqualPermutations(GraphOrderedPoints& g2)
 {
   vector< int > perm;
   for (int i = 0; i < g2.K; i++)
     perm.push_back(i);
-      
+
   // Sure they're not trivially isomorphic, so we run a
   // NextSpecialPerm in any case.
   while(NextSpecialPerm(perm))

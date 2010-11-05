@@ -63,7 +63,7 @@ BoundaryComputer2::Compute(GraphPrinter &printer, enum Statistics stats, int com
   struct rusage rusageBegin, rusageEnd;
   getrusage(RUSAGE_SELF, &rusageBegin);
 #endif
-  
+
   for (int n = 0; n <= graph.G; n++)
     {
       tried[1]++;
@@ -111,16 +111,16 @@ BoundaryComputer2::Compute(GraphPrinter &printer, enum Statistics stats, int com
             statisticsTime[graph.K] / 100 % 10,
             statisticsMemory[graph.K] / 1024,
             statisticsMemory[graph.K] / 102 % 10);
-#else  
+#else
   if (stats== Full)
     fprintf(stderr, "done.\n");
 #endif
-  
+
   printer.PrintSomeGraph(store);
   for (map< int, vector< Graph > >::iterator s = store.begin(); s != store.end(); ++s)
     statistics[s->first] += s->second.size();
   store.clear();
-  
+
   // We have at most 2G-2+M components for a curve of genus G and M
   // marked points.
   for (graph.K = 2; graph.K <= 2*graph.G-2+graph.M; graph.K++)
@@ -131,7 +131,7 @@ BoundaryComputer2::Compute(GraphPrinter &printer, enum Statistics stats, int com
 #if HAVE_GETRUSAGE
       getrusage(RUSAGE_SELF, &rusageBegin);
 #endif
-      
+
       // Every time, we rebuild the adjacency matrix with the right
       // dimension.
       graph.a.assign(graph.K, vector< int >(graph.K, 0));
@@ -155,7 +155,7 @@ BoundaryComputer2::Compute(GraphPrinter &printer, enum Statistics stats, int com
       graph.p1 = 0;
       // Nor simple divisions
       graph.simple_divisions.assign(1, 0);
-      
+
       // Let's start.
       bt_simple_divisions(0);
 
@@ -170,7 +170,7 @@ BoundaryComputer2::Compute(GraphPrinter &printer, enum Statistics stats, int com
             s->PrintNormal();
             bt_g(*s, 0, 0);
           }
-      
+
 #if HAVE_GETRUSAGE
       getrusage(RUSAGE_SELF, &rusageEnd);
       statisticsTime[graph.K] = ((rusageEnd.ru_utime.tv_sec -
@@ -206,7 +206,7 @@ BoundaryComputer2::Compute(GraphPrinter &printer, enum Statistics stats, int com
       if (stats == Full)
         fprintf(stderr, "done.\n");
 #endif
-      
+
       printer.PrintSomeGraph(store);
       for (map< int, vector< Graph > >::iterator s = store.begin(); s != store.end(); ++s)
         statistics[s->first] += s->second.size();
@@ -266,7 +266,7 @@ BoundaryComputer2::bt_a(int i, int j)
       i++;
       j = i+1;
     }
-  
+
   if (i < graph.K-1) // We have to assign a[i][j].
     {
 
@@ -308,7 +308,7 @@ BoundaryComputer2::bt_a(int i, int j)
           if (n > start_i) divisions[i] = true;
           if (n > start_j && j > i+1) divisions[j] = true;
           graph.sum += n;
-          
+
           bt_a(i, j+1);
 
           // We go back to the previous situation.
@@ -375,11 +375,11 @@ BoundaryComputer2::bt_a(int i, int j)
           // won't be used, but they are with K = 3.
           graph.nautyK = -1;
 #endif
-          
+
           if (correct()) addToIntermediateStore();
 
         }
-    }  
+    }
 }
 
 void
@@ -570,7 +570,7 @@ BoundaryComputer2::Statistics(FILE* file)
   for (int i = 0; i < statisticsTime.size(); i++)
     if (kB < statisticsMemory[i]) kB = statisticsMemory[i];
   fprintf(file, "Total memory: %d.%01d MB.\n", kB/1024, kB/102 % 10);
-  
+
   int s = 0;
   fprintf(file, "Tried       ");
   for (int i = 0; i < tried.size(); i++)

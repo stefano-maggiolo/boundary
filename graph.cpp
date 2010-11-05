@@ -113,7 +113,7 @@ Graph::PrintLaTeX(FILE* f) const
 {
   fprintf(f, "    \\begin{tikzpicture}[baseline]\n");
   fprintf(f, "      \\path(0,0) ellipse (2 and %d);\n", (K>2? 2: 1));
-  
+
   for (int i = 0; i < K; i++)
     {
       // The following parameter is decorative: it is used to center the position of the marked point when it is only one.
@@ -127,12 +127,12 @@ Graph::PrintLaTeX(FILE* f) const
       (m[i]==1 && K==1)? inutile = 30:inutile=0;
       if (m[i]!=0 && a[i][i] ==0)
         fprintf(f, "      \\tikzstyle{level 1}=[counterclockwise from=%d,level distance=9mm,sibling angle=%d]\n", -60+360*i/K+2*param-param2+inutile, (m[i]==1?0: (120+8*param2)/(m[i]-1)));;
-      fprintf(f, "      \\node (A%d) at (%d:1) {$\\scriptstyle{%d_{%d}}$}", i, (360 * i / K), g[i], m[i]);	
+      fprintf(f, "      \\node (A%d) at (%d:1) {$\\scriptstyle{%d_{%d}}$}", i, (360 * i / K), g[i], m[i]);
       for (int j= 0; j< m[i]; j++)
         fprintf(f, " child");
       fprintf(f, ";\n");
     }
-  fprintf(f, "\n");	
+  fprintf(f, "\n");
 
   for (int i = 0; i < K; i++)
     for (int j = 0; j < a[i][i]; j++)
@@ -150,7 +150,7 @@ Graph::PrintLaTeX(FILE* f) const
       for (int k = 0; k < a[i][j]; k++)
         fprintf(f, "      \\path (A%d) edge [bend left=%lf] (A%d);\n", i, ((k - a[i][j]/2.0) * 30+15), j);
 
-  
+
   fprintf(f, "    \\end{tikzpicture}\n");
 }
 
@@ -204,7 +204,7 @@ Graph::Graph(const Graph& g2)
 {
   G = g2.G;
   M = g2.M;
-  K = g2.K;  
+  K = g2.K;
 
   g = g2.g;
   m = g2.m;
@@ -247,7 +247,7 @@ Graph::Graph(const Graph& g2)
 Graph::Graph(FILE* f)
 {
   unsigned char tmp;
-  
+
   assert(fread(&tmp, sizeof(unsigned char), 1, f) == 1);
   K = tmp;
 
@@ -292,7 +292,7 @@ Graph::ComputeDivisions(void)
   simple_divisions.push_back(0);
   for (int i = 1; i < K; ++i)
     {
-      if (g[i-1] != g[i] || 
+      if (g[i-1] != g[i] ||
           m[i-1] != m[i] ||
           l[i-1] != l[i])
         simple_divisions.push_back(i);
@@ -493,7 +493,7 @@ Graph::EqualLapack(Graph& g2)
         break;
       }
 
-  if (ok1 && PermutationOk(g2, permutation1)) return true; 
+  if (ok1 && PermutationOk(g2, permutation1)) return true;
   else if (ok2 && PermutationOk(g2, permutation2)) return true;
   else return false;
 }
@@ -504,10 +504,10 @@ Graph::PermutationOk(Graph& g2, vector< int >& perm)
   for (int i = 0; i < K; ++i)
     {
       if (g2.g[perm[i]] != g[i] ||
-          g2.m[perm[i]] != m[i] || 
+          g2.m[perm[i]] != m[i] ||
           g2.l[perm[i]] != l[i])
         return false;
-      
+
       for (int j = i+1; j < K; ++j)
         if (g2.a[perm[i]][perm[j]] != a[i][j])
           return false;
@@ -524,9 +524,9 @@ Graph::ComputeDreadnaut(void)
 
   graph simple[MAXN*MAXM];
   int ptn[MAXN];
-  
+
   int maxa = 0;
-  
+
   for (int i = 0; i < K; ++i)
     for (int j = i+1; j < K; ++j)
       if (maxa < a[i][j]) maxa = a[i][j];
@@ -562,7 +562,7 @@ Graph::ComputeDreadnaut(void)
       set* nautyRow = GRAPHROW(simple, i, nautyM);
       EMPTYSET(nautyRow, nautyM);
     }
-  
+
   for (int i = 0; i < K; ++i)
     {
       set* nautyRow = GRAPHROW(simple, i, nautyM);
@@ -610,20 +610,20 @@ Graph::EqualNauty(Graph& g2)
   if (g2.nautyK == -1) g2.ComputeDreadnaut();
 
   if (nautyK != g2.nautyK) return false;
-  
+
   bool ret = (memcmp(nautyGraph, g2.nautyGraph, nautyK*nautyM*sizeof(graph)) == 0);
 
   return ret;
 }
 #endif
-  
+
 bool
 Graph::EqualPermutations(Graph& g2)
 {
   vector< int > perm;
   for (int i = 0; i < g2.K; i++)
     perm.push_back(i);
-      
+
   // Sure they're not trivially isomorphic, so we run a
   // NextSpecialPerm in any case.
   while(NextSpecialPerm(perm))

@@ -4,7 +4,7 @@ using namespace std;
 
 BinaryGraphReader::BinaryGraphReader(FILE* f)
   :
-  file(f)  
+  file(f)
 {
 }
 

@@ -54,7 +54,7 @@ CTComputer::Compute(GraphPrinter &printer, enum Statistics stats, int computeOnl
   struct rusage rusageBegin, rusageEnd;
   getrusage(RUSAGE_SELF, &rusageBegin);
 #endif
-  
+
   tried[1]++;
   graph.a.assign(1, vector< int >(1, 0));
   graph.g.assign(1, graph.G);
@@ -103,12 +103,12 @@ CTComputer::Compute(GraphPrinter &printer, enum Statistics stats, int computeOnl
   if (stats == Full)
     fprintf(stderr, "done.\n"),
 #endif
-        
+
   printer.PrintSomeGraph(store);
   for (map< int, vector< Graph > >::iterator s = store.begin(); s != store.end(); ++s)
     statistics[s->first] += s->second.size();
   store.clear();
-  
+
   // We have at most 2G-2+M components for a curve of genus G and M
   // marked points.
   for (graph.K = 2; graph.K <= 2*graph.G-2+graph.M; graph.K++)
@@ -119,7 +119,7 @@ CTComputer::Compute(GraphPrinter &printer, enum Statistics stats, int computeOnl
 #if HAVE_GETRUSAGE
       getrusage(RUSAGE_SELF, &rusageBegin);
 #endif
-      
+
       // Every time, we rebuild the adjacency matrix with the right
       // dimension.
       graph.a.assign(graph.K, vector< int >(graph.K, 0));
@@ -179,7 +179,7 @@ CTComputer::Compute(GraphPrinter &printer, enum Statistics stats, int computeOnl
       if (stats == Full)
         fprintf(stderr, "done.\n");
 #endif
-      
+
       printer.PrintSomeGraph(store);
       for (map< int, vector< Graph > >::iterator s = store.begin(); s != store.end(); ++s)
         statistics[s->first] += s->second.size();
@@ -214,7 +214,7 @@ CTComputer::bt_g(int i)
       // generating isomorphic graphs.
       int start = 0;
       if (i > 0) start = max(start, graph.g[i-1]);
-      
+
       // Since we want G = sum and g[j]>=g[i], then we get the
       // following.
       int end = (graph.G - graph.sum) / (graph.K-i);
@@ -226,7 +226,7 @@ CTComputer::bt_g(int i)
           if (i == graph.K-1)
             if (graph.sum + n != graph.G)
               continue;
-          
+
           // We do the changes induced by g[i] = n.
           graph.g[i] = n;
           if (n == 0) graph.p1++;
@@ -253,7 +253,7 @@ CTComputer::bt_m(int i)
 {
   if (i < graph.K) // We have to assign m[i].
 	{
-	// We impose the vector m to be non-decreasing for i's 
+	// We impose the vector m to be non-decreasing for i's
 	// such that the genus is equal, to avoid generating isomorphic graphs.
       int start = divisions[i]? 0: graph.m[i-1];
 	// m[i] is always smaller or equal than M-msum.
@@ -290,7 +290,7 @@ CTComputer::bt_a(int i, int j)
       i++;
       j = i+1;
     }
-  
+
   if (i < graph.K-1) // We have to assign a[i][j].
     {
 
@@ -346,7 +346,7 @@ CTComputer::bt_a(int i, int j)
           graph.total_edges += n;
           if (n > start_i) divisions[i] = true;
           if (n > start_j && j > i+1) divisions[j] = true;
-          
+
           bt_a(i, j+1);
 
           // We go back to the previous situation.
@@ -409,9 +409,9 @@ CTComputer::bt_a(int i, int j)
       // won't be used, but they are with K = 3.
       graph.nautyK = -1;
 #endif
-      
+
       if (correct()) add_to_store();
-      
+
     }
 }
 
@@ -481,7 +481,7 @@ CTComputer::Statistics(FILE* file)
     if (kB < statisticsMemory[i]) kB = statisticsMemory[i];
   fprintf(file, "Total memory: %d.%01d MB.\n", kB/1024, kB/102 % 10);
 #endif
-  
+
   int s = 0;
   fprintf(file, "Tried       ");
   for (int i = 0; i < tried.size(); i++)
