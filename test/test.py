@@ -64,7 +64,7 @@ correct[(1,10)] = ((0,2,23,148,630,1812,3596,4792,4138,2063,474,),
                    (1,10,66,297,968,2270,3848,4550,3602,1690,376,))
 correct[(1,11)] = ((0,2,25,185,900,3059,7335,12420,14457,11042,4960,1016,),
                    (1,11,80,410,1526,4205,8558,12744,13442,9545,4070,809,))
-    
+
 correct[(2,0)] = ((0,3,4,),
                   (1,2,2,2,))
 correct[(2,1)] = ((0,3,7,6,),
@@ -116,19 +116,24 @@ correct[(5,2)] = ((0,6,175,1936,11223,38259,81297,108570,89321,41251,8517,),
 correct[(6,0)] = ((0,7,97,699,3100,8662,15961,19043,14525,6338,1376,),
                   (1,4,14,56,185,571,1511,3500,6740,10831,13853,13997,10508,5712,1937,388,))
 
-# Easy cases and hard cases
-
 easy = [
-    (0,3), (0,4), (0,5), (0,6), (0,7), (0,8),
-    (0,9), (0,10), (0,11), (0,12), (0,13), (0,14), # K=12 C=11
-    (1,1), (1,2), (1,3), (1,4), (1,5),
-    (1,6), (1,7), (1,8), (1,9), (1,10), # K=10 C=10
-    (2,0), (2,1), (2,2), (2,3), (2,4), (2,5),
+    (0,3), (0,4), (0,5), (0,6), (0,7),
+    (0,8), (0,9), (0,10), (0,11), (0,12), # K=10 C=9
+    (1,1), (1,2), (1,3), (1,4),
+    (1,5), (1,6), (1,7), (1,8), # K=8 C=8
+    (2,0), (2,1), (2,2), (2,3), (2,4), (2,5), # K=7 C=8
+    (3,0), (3,1), (3,2), (3,3), # K=7 C=9
+    (4,0), (4,1), # K=7 C=10
+    (5,0), # K=8 C=10
+    ]
+average = [
+    (0,13), (0,14), # K=12 C=11
+    (1,9), (1,10), # K=10 C=10
     (2,6), (2,7), # K=9 C=10
-    (3,0), (3,1), (3,2), (3,3), (3,4), # K=8 C=10
-    (4,0), (4,1), (4,2), # K=8 C=11
-    (5,0), (5,1), # K=9 C=11
-    ] 
+    (3,4), # K=8 C=10
+    (4,2), # K=8 C=11
+    (5,1), # K=9 C=11
+    ]
 hard = [
     # K=12 C=11
     (1,11), # K=11 C=11
@@ -138,7 +143,7 @@ hard = [
     # K=9 C=11
     (6,0), # K=10 C=15
     ]
-easy += hard
+gns = easy+average+hard
 
 # Utility functions
 
@@ -158,7 +163,7 @@ def compressFlags(f):
         s = "".join([t(a) for a in y])
         r.append(s)
     return " ".join(r)
-    
+
 def strSec(s):
     s, ds = s/1000, (s/100) % 10
     return "%5d.%01d" % (s, ds)
@@ -197,7 +202,7 @@ def getFlags(name):
 
 def compute(name, flags, gn, maxTime = 60*5):
     print "Computing %d %d... " % gn,
-    process = Popen(name + " -S T %d %d > /dev/null" % gn,
+    process = Popen(name + " -P N -S T %d %d > /dev/null" % gn,
                     shell=True, bufsize=1,
                     stdin=PIPE, stdout=PIPE, stderr=PIPE,
                     close_fds=True)
@@ -207,16 +212,18 @@ def compute(name, flags, gn, maxTime = 60*5):
     current = {}
     current["flags"] = flags
     current["name"] = name
-        
+
     i = 0
     while i < maxTime:
         if process.poll() != None: break
         time.sleep(1)
         i += 1
-            
+
     if i < maxTime:
         print "ok."
         s = e.readline()
+        s += e.readline()
+        s += e.readline()
         s += e.readline()
         s += e.readline()
         s += e.readline()
@@ -228,21 +235,25 @@ def compute(name, flags, gn, maxTime = 60*5):
             return None
         current["time"] = s[0]
         current["memory"] = s[1]
+        current["unconnected"] = s[4]
+        current["duplicated"] = s[5]
     else:
         print "killed"
         os.kill(process.pid, signal.SIGTERM)
         current["time"] = (0,) * (2*gn[0]-2+gn[1]) + (maxTime*1000,)
         current["memory"] = (0,) * (2*gn[0]-1+gn[1])
-        
+        current["time"] = (0,) * (2*gn[0]-1+gn[1])
+        current["memory"] = (0,) * (2*gn[0]-1+gn[1])
+
     return current
-    
+
 def addToStore(name, replace = False):
     flags = getFlags(name)
     if p.has_key(flags) and not replace:
         print "\nAlready in store (use delete or replace)!"
         exit(1)
     p[flags] = {}
-    for gn in easy:
+    for gn in gns:
         p[flags][gn] = compute(name, flags, gn)
         if p[flags][gn] == None:
             del(p[flags])
@@ -254,17 +265,17 @@ def fill():
     global notOverall
     notBest = True
     p["best"] = {}
-    for gn in easy:
+    for gn in gns:
         p["best"][gn] = {}
     notOverall = True
     p["overall"] = {}
-    for gn in easy:
+    for gn in gns:
         p["overall"][gn] = {}
 
     for f in p.keys():
         if f == "best" or f == "overall": continue
         name = p[f][p[f].keys()[0]]["name"]
-        for gn in easy:
+        for gn in gns:
             if gn in p[f].keys(): continue
             p[f][gn] = compute(name, f, gn)
             if p[f][gn] == None:
@@ -291,7 +302,7 @@ def compare(flags, write = True, write2 = False):
     moverallTot = 0
     moverallTotB = 0
     moverallTotO = 0
-    for gn in easy:
+    for gn in gns:
         notBestgn = notBest or not p["best"].has_key(gn)
         notOverallgn = notOverall or not p["overall"].has_key(gn)
         curm = current[gn]["memory"]
@@ -330,7 +341,7 @@ def compare(flags, write = True, write2 = False):
         if not notBestgn:
             if write: print strMemRel(mtot[gn]-mtotB[gn], mtot[gn]), " ",
         if not notOverallgn:
-            if write: print strMemRel(mtot[gn]-mtotO[gn], mtot[gn]), " ", 
+            if write: print strMemRel(mtot[gn]-mtotO[gn], mtot[gn]), " ",
         if write: print "\033[22m"
         moverallTot = max(moverallTot, mtot[gn])
         moverallTotB = max(moverallTotB, mtotB[gn])
@@ -355,7 +366,7 @@ def compare(flags, write = True, write2 = False):
         if not notBestgn:
             if write: print strSecRel(tot[gn]-totB[gn], tot[gn]), " ",
         if not notOverallgn:
-            if write: print strSecRel(tot[gn]-totO[gn], tot[gn]), " ", 
+            if write: print strSecRel(tot[gn]-totO[gn], tot[gn]), " ",
         if write: print "\033[22m"
         if write: print
         overallTot += tot[gn]
@@ -368,9 +379,9 @@ def compare(flags, write = True, write2 = False):
     if write: print "\033[1mOverall\033[22m"
     if write: print " Current (%s)" % compressFlags(flags)
     if not notOverall:
-        if write: print " Overall best (%s):" % compressFlags(p["overall"][easy[0]]["flags"])
+        if write: print " Overall best (%s):" % compressFlags(p["overall"][gns[0]]["flags"])
     if write: print "\033[1mMemory (MB):\033[22m"
-    for gn in easy:
+    for gn in gns:
         notBestgn = notBest or not p["best"].has_key(gn)
         notOverallgn = notOverall or not p["overall"].has_key(gn)
         if write: print "g,n=%2d,%2d: " % gn,
@@ -388,7 +399,7 @@ def compare(flags, write = True, write2 = False):
     if write: print "\033[22m"
 
     if write: print "\033[1mTime (s):\033[22m"
-    for gn in easy:
+    for gn in gns:
         notBestgn = notBest or not p["best"].has_key(gn)
         notOverallgn = notOverall or not p["overall"].has_key(gn)
         if write: print "g,n=%2d,%2d: " % gn,
@@ -415,13 +426,13 @@ def compare(flags, write = True, write2 = False):
 
     if notOverall or overallTot < overallTotO: # Replace overall
         if write2: print "New overall best!"
-        for gn in easy:
+        for gn in gns:
             p["overall"][gn]["flags"] = current[gn]["flags"]
             p["overall"][gn]["name"] = current[gn]["name"]
             p["overall"][gn]["time"] = current[gn]["time"]
             p["overall"][gn]["memory"] = current[gn]["memory"]
 
-    p[current[easy[0]]["flags"]] = current
+    p[current[gns[0]]["flags"]] = current
 
 def compareTwo(f1, f2):
     if not p.has_key(f1) or not p.has_key(f2):
@@ -437,7 +448,7 @@ def compareTwo(f1, f2):
     moverallTot1 = 0
     moverallTot2 = 0
 
-    for gn in easy:
+    for gn in gns:
         m1 = p[f1][gn]["memory"]
         t1 = p[f1][gn]["time"]
         m2 = p[f2][gn]["memory"]
@@ -483,7 +494,7 @@ def compareTwo(f1, f2):
     print " First  (%s)" % compressFlags(f1)
     print " Second (%s):" % compressFlags(f2)
     print "\033[1mMemory (MB):\033[22m"
-    for gn in easy:
+    for gn in gns:
         print "g,n=%2d,%2d: " % gn,
         print strMem(mtot1[gn]), " ",
         print strMemRel(mtot1[gn] - mtot2[gn], mtot1[gn]), " ",
@@ -493,7 +504,7 @@ def compareTwo(f1, f2):
     print "\033[22m"
 
     print "\033[1mTime (s):\033[22m"
-    for gn in easy:
+    for gn in gns:
         print "g,n=%2d,%2d: " % gn,
         print strSec(tot1[gn]), " ",
         print strSecRel(tot1[gn] - tot2[gn], tot1[gn]), " ",
@@ -506,7 +517,7 @@ def compareTwo(f1, f2):
 def flagsFromPar(s):
     if p.has_key(s): return s
     for x in p.keys():
-        if s == p[x][easy[0]]["name"]:
+        if s == p[x][gns[0]]["name"]:
             return x
     s = int(s)
     if s > 0:
@@ -520,7 +531,7 @@ def flagsFromPar(s):
             i += 1
             n += 1
     return None
-    
+
 def plotSM():
     numPlots = 4
     xAxis = [[] for i in xrange(numPlots)]
@@ -528,13 +539,13 @@ def plotSM():
     seriesM = [[] for i in xrange(numPlots)]
     legend = []
 
-    xAxis[0] = [x for x in easy if x[1] == (5-x[0]) * 2]
+    xAxis[0] = [x for x in gns if x[1] == (5-x[0]) * 2]
     xAxis[0].sort()
 
-    xAxis[1] = [x for x in easy if x[1] == 0]
+    xAxis[1] = [x for x in gns if x[1] == 0]
     xAxis[1].sort()
 
-    xAxis[2] = [x for x in easy if x[0] == 0]
+    xAxis[2] = [x for x in gns if x[0] == 0]
     xAxis[2].sort()
 
     def compgn(gn1, gn2):
@@ -547,7 +558,7 @@ def plotSM():
                 return (3*gn1[0] - 3 + gn1[1]) - (3*gn2[0] - 3 + gn2[1])
             else:
                 return gn1[0] - gn2[0]
-    xAxis[3] = easy
+    xAxis[3] = gns
     xAxis[3].sort(cmp = compgn)
 
     for x in p.keys():
@@ -578,63 +589,64 @@ def printStored():
         if x != "best" and x != "overall":
             print "%2d: %s" % (i, x)
             i += 1
-    
+
 # Format:
 
 # p["best"] = best performance for the each (g,n)
 #             may be from several programs
-# p["overall"] = best global performance (on easy cases)
+# p["overall"] = best global performance
 
 # p["best"][(g,n)]["flags"] = string containing the flags
 # p["best"][(g,n)]["time"] = tuple of values of time used for different K
 # p["best"][(g,n)]["memory"] = tuple of values of memory usage for different K
+# p["best"][(g,n)]["unconnected"] = tuple of numbers of unconnected graphs generated for different K
+# p["best"][(g,n)]["duplicated"] = tuple of numbers of duplicated graphs generated for different K
 
-# Exactness on all easy tests is required for storing a performance.
+# Exactness on all tests is required for storing a performance.
 
-notBest = False
-notOverall = False
-p = shelve.open("performances", writeback = True)
-if not p.has_key("best"):
-    notBest = True
-    p["best"] = {}
-    for gn in easy:
-        p["best"][gn] = {}
-if not p.has_key("overall"):
-    notOverall = True
-    p["overall"] = {}
-    for gn in easy:
-        p["overall"][gn] = {}
+if __name__ == "__main__":
+    notBest = False
+    notOverall = False
+    p = shelve.open("performances", writeback = True)
+    if not p.has_key("best"):
+        notBest = True
+        p["best"] = {}
+        for gn in gns:
+            p["best"][gn] = {}
+    if not p.has_key("overall"):
+        notOverall = True
+        p["overall"] = {}
+        for gn in gns:
+            p["overall"][gn] = {}
 
-# MAIN METHOD!
+    if len(argv) == 1: exit(1)
+    elif len(argv) == 2:
+        if argv[1] == "stored":
+            printStored()
+        elif argv[1] == "fill":
+            fill()
+        elif argv[1] == "plot":
+            plotSM()
+        else:
+            exit(1)
+    elif len(argv) == 3:
+        if argv[1] == "add":
+            addToStore(argv[2])
+        elif argv[1] == "replace":
+            addToStore(flagsFromPar(argv[2]), replace = True)
+        elif argv[1] == "compare":
+            compare(flagsFromPar(argv[2]))
+        elif argv[1] == "remove":
+            f = flagsFromPar(argv[2])
+            print "Removing ", argv[2], " ", f
+            if p.has_key(f):
+                del(p[f])
+        else:
+            exit(1)
+    elif len(argv) == 4:
+        if argv[1] == "compare":
+            compareTwo(flagsFromPar(argv[2]), flagsFromPar(argv[3]))
+        else:
+            exit(1)
 
-if len(argv) == 1: exit(1)
-elif len(argv) == 2:
-    if argv[1] == "stored":
-        printStored()
-    elif argv[1] == "fill":
-        fill()
-    elif argv[1] == "plot":
-        plotSM()
-    else:
-        exit(1)
-elif len(argv) == 3:
-    if argv[1] == "add":
-        addToStore(argv[2])
-    elif argv[1] == "replace":
-        addToStore(flagsFromPar(argv[2]), replace = True)
-    elif argv[1] == "compare":
-        compare(flagsFromPar(argv[2]))
-    elif argv[1] == "remove":
-        f = flagsFromPar(argv[2])
-        print "Removing ", argv[2], " ", f
-        if p.has_key(f):
-            del(p[f])
-    else:
-        exit(1)
-elif len(argv) == 4:
-    if argv[1] == "compare":
-        compareTwo(flagsFromPar(argv[2]), flagsFromPar(argv[3]))
-    else:
-        exit(1)
-        
-p.close()
+    p.close()

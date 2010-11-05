@@ -23,7 +23,7 @@ def plot(xAxis, series, name, logarithmic = True, scale = 1.0, title = "", legen
             else: return log(x)
         else:
             return x/scale
-    
+
     for s in series:
         chart.add_data([proc(x) for x in s])
     colours = ["0000FF", "00FF00", "FF0000", "FFFF00", "FF00FF", "00FFFF"]
@@ -38,7 +38,7 @@ def plot(xAxis, series, name, logarithmic = True, scale = 1.0, title = "", legen
         left_axis = range(0, top)
     else:
         left_axis = range(0, top, int(top / 10.0 + 1))
-        
+
     left_axis[0] = ''
     chart.set_axis_labels(Axis.LEFT, left_axis)
 
@@ -46,7 +46,7 @@ def plot(xAxis, series, name, logarithmic = True, scale = 1.0, title = "", legen
         xAxis = [xAxis[i] for i in range(0, len(xAxis), 4)]
     elif len(xAxis) > 8:
         xAxis = [xAxis[i] for i in range(0, len(xAxis), 2)]
-        
+
     chart.set_axis_labels(Axis.BOTTOM, xAxis)
 
     chart.fill_linear_stripes(Chart.CHART, 0, 'CCCCCC', 1.0/(len(xAxis)-1), 'FFFFFF', 1.0/(len(xAxis)-1))

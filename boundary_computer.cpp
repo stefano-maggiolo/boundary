@@ -688,5 +688,15 @@ BoundaryComputer::TerseStatistics(FILE* file)
     fprintf(file, "%d,", statistics[i]);
   fprintf(file, "),\n");
 
+  fprintf(file, " (");
+  for (int i = 0; i < unconnected.size(); i++)
+    fprintf(file, "%d,", unconnected[i]);
+  fprintf(file, "),\n");
+
+  fprintf(file, " (");
+  for (int i = 0; i < duplicated.size(); i++)
+    fprintf(file, "%d,", duplicated[i]);
+  fprintf(file, "),\n");
+
   fprintf(file, ")\n");
 }
