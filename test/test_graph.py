@@ -14,6 +14,7 @@ def plot(xAxis, series, name, logarithmic = True, scale = 1.0, title = "", legen
             else:
                 if s[i]/scale > top: top = s[i]/scale
     top = int(top + 1)
+    if top <= 1: top = 2
 
     chart = SimpleLineChart(600, 400, y_range=[0,top], title = title)
 
@@ -49,7 +50,7 @@ def plot(xAxis, series, name, logarithmic = True, scale = 1.0, title = "", legen
 
     chart.set_axis_labels(Axis.BOTTOM, xAxis)
 
-    chart.fill_linear_stripes(Chart.CHART, 0, 'CCCCCC', 1.0/(len(xAxis)-1), 'FFFFFF', 1.0/(len(xAxis)-1))
+    chart.fill_linear_stripes(Chart.CHART, 0, 'CCCCCC', 1.0/max(1, len(xAxis)-1), 'FFFFFF', 1.0/max(1, len(xAxis)-1))
     chart.set_grid(0, 101.0/(len(left_axis)-1), 5, 5)
 
     chart.download(name)

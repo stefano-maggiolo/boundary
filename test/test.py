@@ -4,12 +4,8 @@ from sys import argv, exit
 import shelve
 from subprocess import Popen, PIPE
 import os, signal, time
-from copy import deepcopy
+from test_graph import plot
 
-try:
-    from test_graph import plot
-except:
-    pass
 
 # Database of known cases
 
@@ -130,18 +126,19 @@ average = [
     (0,13), (0,14), # K=12 C=11
     (1,9), (1,10), # K=10 C=10
     (2,6), (2,7), # K=9 C=10
-    (3,4), # K=8 C=10
-    (4,2), # K=8 C=11
+    (3,4), (3,5), # K=9 C=11
+    (4,2), (4,3), # K=9 C=12
     (5,1), # K=9 C=11
     ]
 hard = [
-    # K=12 C=11
-    (1,11), # K=11 C=11
-    (2,8), # K=10 C=11
-    (3,5), # K=9 C=11
-    (4,3), # K=9 C=12
-    # K=9 C=11
-    (6,0), # K=10 C=15
+    (0,15), (0,16), # K=14 C=13
+    (1,11), (1,12), # K=12 C=12
+    (2,8), (2,9), # K=11 C=12
+    (3,6), # K=10 C=12
+    (4,4), # K=10 C=13
+    (5,2), # K=10 C=12
+    (6,0), (6,1), # K=11 C=16
+    (7,0), # K=12 C=18
     ]
 gns = easy+average+hard
 
@@ -200,24 +197,27 @@ def getFlags(name):
     os.kill(process.pid, signal.SIGTERM)
     return flags
 
-def compute(name, flags, gn, maxTime = 60*5):
+def compute(name, flags, gn, maxTime = 60*5000):
     print "Computing %d %d... " % gn,
-    process = Popen(name + " -P N -S T %d %d > /dev/null" % gn,
-                    shell=True, bufsize=1,
-                    stdin=PIPE, stdout=PIPE, stderr=PIPE,
-                    close_fds=True)
-    e = process.stderr
-    e.readline()[:-1]
-
     current = {}
     current["flags"] = flags
     current["name"] = name
+    output = open("%s_%02d_%02d" % (name, gn[0], gn[1]), "w")
+    process = Popen("%s -P B -S T %d %d" %
+                    (name, gn[0], gn[1]),
+                    shell=True, bufsize=1,
+                    stdin=PIPE, stdout=output, stderr=PIPE)
+    output.close()
+    e = process.stderr
+    e.readline()[:-1]
+
 
     i = 0
-    while i < maxTime:
-        if process.poll() != None: break
-        time.sleep(1)
-        i += 1
+#    while i < maxTime:
+#        if process.poll() != None: break
+#        time.sleep(10)
+#        i += 10
+    process.wait()
 
     if i < maxTime:
         print "ok."
@@ -230,11 +230,13 @@ def compute(name, flags, gn, maxTime = 60*5):
         s += e.readline()
         s += e.readline()
         s = eval(s)
-        if (s[2:4] != correct[gn]):
+        if (gn in correct and s[2:4] != correct[gn]):
             print "Case %d %d not correct!" % gn
             return None
         current["time"] = s[0]
         current["memory"] = s[1]
+        current["found"] = s[2]
+        current["found_codim"] = s[3]
         current["unconnected"] = s[4]
         current["duplicated"] = s[5]
     else:
@@ -242,38 +244,30 @@ def compute(name, flags, gn, maxTime = 60*5):
         os.kill(process.pid, signal.SIGTERM)
         current["time"] = (0,) * (2*gn[0]-2+gn[1]) + (maxTime*1000,)
         current["memory"] = (0,) * (2*gn[0]-1+gn[1])
-        current["time"] = (0,) * (2*gn[0]-1+gn[1])
-        current["memory"] = (0,) * (2*gn[0]-1+gn[1])
+        current["found"] = (0,) * (2*gn[0]-1+gn[1])
+        current["found_codim"] = (0,) * (3*gn[0]-2+gn[1])
+        current["unconnected"] = (0,) * (2*gn[0]-1+gn[1])
+        current["duplicated"] = (0,) * (2*gn[0]-1+gn[1])
 
     return current
 
 def addToStore(name, replace = False):
     flags = getFlags(name)
-    if p.has_key(flags) and not replace:
+    if flags in p and not replace:
         print "\nAlready in store (use delete or replace)!"
         exit(1)
     p[flags] = {}
     for gn in gns:
-        p[flags][gn] = compute(name, flags, gn)
-        if p[flags][gn] == None:
-            del(p[flags])
+        try:
+            p[flags][gn] = compute(name, flags, gn)
+        except:
+            if flags in p:
+                del(p[flags])
             return
-    compare(flags, write = False, write2 = True)
+    computeBest()
 
 def fill():
-    global notBest
-    global notOverall
-    notBest = True
-    p["best"] = {}
-    for gn in gns:
-        p["best"][gn] = {}
-    notOverall = True
-    p["overall"] = {}
-    for gn in gns:
-        p["overall"][gn] = {}
-
     for f in p.keys():
-        if f == "best" or f == "overall": continue
         name = p[f][p[f].keys()[0]]["name"]
         for gn in gns:
             if gn in p[f].keys(): continue
@@ -281,15 +275,37 @@ def fill():
             if p[f][gn] == None:
                 del(p[f])
                 break
-        compare(f, write = False)
+    computeBest()
+
+def computeBest():
+    b = {}
+    for gn in gns:
+        b[gn] = None
+        for k in p:
+            if gn not in p[k]:
+                continue
+            if b[gn] == None:
+                b[gn] = k
+            if sum(p[k][gn]["time"]) < sum(p[b[gn]][gn]["time"]):
+                b[gn] = k
+
+    o = None
+    best = None
+    for k in p:
+        s = sum([sum(p[k][gn]["time"]) for gn in easy])
+        if o == None  or s < best:
+            best = s
+            o = k
+    
+    return b, o
 
 def compare(flags, write = True, write2 = False):
-    if not p.has_key(flags):
+    if not flags in p:
         print "Flags not in store!"
         exit(1)
     else:
         current = p[flags]
-    replaceBest = []
+
     tot = {}
     totB = {}
     totO = {}
@@ -303,24 +319,24 @@ def compare(flags, write = True, write2 = False):
     moverallTotB = 0
     moverallTotO = 0
     for gn in gns:
-        notBestgn = notBest or not p["best"].has_key(gn)
-        notOverallgn = notOverall or not p["overall"].has_key(gn)
+        Bestgn = gn in best and best[gn] != None
+        Overallgn = gn in p[overall]
         curm = current[gn]["memory"]
         curt = current[gn]["time"]
-        if not notBestgn:
-            bestm = p["best"][gn]["memory"]
-            bestt = p["best"][gn]["time"]
-        if not notOverallgn:
-            overallm = p["overall"][gn]["memory"]
-            overallt = p["overall"][gn]["time"]
+        if Bestgn:
+            bestm = p[best[gn]][gn]["memory"]
+            bestt = p[best[gn]][gn]["time"]
+        if Overallgn:
+            overallm = p[overall][gn]["memory"]
+            overallt = p[overall][gn]["time"]
         if write: print "\033[1mCase %d %d\033[22m" % gn
         if write: print " Current (%s)" % compressFlags(flags)
-        if not notBestgn:
+        if Bestgn:
             if write: print " Best (%s):" % \
-                    compressFlags(p["best"][gn]["flags"])
-        if not notOverallgn:
+                    compressFlags(p[best[gn]][gn]["flags"])
+        if Overallgn:
             if write: print " Overall best (%s):" % \
-                    compressFlags(p["overall"][gn]["flags"])
+                    compressFlags(p[overall][gn]["flags"])
 
         mtot[gn] = 0
         mtotB[gn] = 0
@@ -330,17 +346,17 @@ def compare(flags, write = True, write2 = False):
             if write: print "K=%2d:      " % x,
             if write: print strMem(curm[x]), " ",
             mtot[gn] = max(mtot[gn], curm[x])
-            if not notBestgn:
+            if Bestgn:
                 if write: print strMemRel(curm[x] - bestm[x], curm[x]), " ",
                 mtotB[gn] = max(mtotB[gn], bestm[x])
-            if not notOverallgn:
+            if Overallgn:
                 if write: print strMemRel(curm[x] - overallm[x], curm[x]), " ",
                 mtotO[gn] = max(mtotO[gn], overallm[x])
             if write: print
         if write: print "\033[1mMax:        " + strMem(mtot[gn]), " ",
-        if not notBestgn:
+        if Bestgn:
             if write: print strMemRel(mtot[gn]-mtotB[gn], mtot[gn]), " ",
-        if not notOverallgn:
+        if Overallgn:
             if write: print strMemRel(mtot[gn]-mtotO[gn], mtot[gn]), " ",
         if write: print "\033[22m"
         moverallTot = max(moverallTot, mtot[gn])
@@ -355,17 +371,17 @@ def compare(flags, write = True, write2 = False):
             if write: print "K=%2d:      " % x,
             if write: print strSec(curt[x]), " ",
             tot[gn] += curt[x]
-            if not notBestgn:
+            if Bestgn:
                 if write: print strSecRel(curt[x] - bestt[x], curt[x]), " ",
                 totB[gn] += bestt[x]
-            if not notOverallgn:
+            if Overallgn:
                 if write: print strSecRel(curt[x] - overallt[x], curt[x]), " ",
                 totO[gn] += overallt[x]
             if write: print
         if write: print "\033[1mTot:        " + strSec(tot[gn]), " ",
-        if not notBestgn:
+        if Bestgn:
             if write: print strSecRel(tot[gn]-totB[gn], tot[gn]), " ",
-        if not notOverallgn:
+        if Overallgn:
             if write: print strSecRel(tot[gn]-totO[gn], tot[gn]), " ",
         if write: print "\033[22m"
         if write: print
@@ -373,69 +389,49 @@ def compare(flags, write = True, write2 = False):
         overallTotB += totB[gn]
         overallTotO += totO[gn]
 
-        if notBestgn or tot[gn] < totB[gn]: # Replace best
-            replaceBest.append(gn)
 
     if write: print "\033[1mOverall\033[22m"
     if write: print " Current (%s)" % compressFlags(flags)
-    if not notOverall:
-        if write: print " Overall best (%s):" % compressFlags(p["overall"][gns[0]]["flags"])
+    if write: print " Overall best (%s):" % compressFlags(p[overall][gns[0]]["flags"])
     if write: print "\033[1mMemory (MB):\033[22m"
     for gn in gns:
-        notBestgn = notBest or not p["best"].has_key(gn)
-        notOverallgn = notOverall or not p["overall"].has_key(gn)
+        Bestgn = gn in best and best[gn] != None
+        Overallgn = gn in p[overall]
         if write: print "g,n=%2d,%2d: " % gn,
         if write: print strMem(mtot[gn]), " ",
-        if not notBestgn:
+        if Bestgn:
             if write: print strMemRel(mtot[gn] - mtotB[gn], mtot[gn]), " ",
-        if not notOverallgn:
+        if Overallgn:
             if write: print strMemRel(mtot[gn] - mtotO[gn], mtot[gn]), " ",
         if write: print
     if write: print "\033[1mMax:        " + strMem(moverallTot), " ",
-    if not notBest:
+    if Best:
         if write: print strMemRel(moverallTot-moverallTotB, moverallTot), " ",
-    if not notOverall:
+    if Overall:
         if write: print strMemRel(moverallTot-moverallTotO, moverallTot), " ",
     if write: print "\033[22m"
 
     if write: print "\033[1mTime (s):\033[22m"
     for gn in gns:
-        notBestgn = notBest or not p["best"].has_key(gn)
-        notOverallgn = notOverall or not p["overall"].has_key(gn)
+        Bestgn = gn in best and best[gn] != None
+        Overallgn = gn in p[overall]
         if write: print "g,n=%2d,%2d: " % gn,
         if write: print strSec(tot[gn]), " ",
-        if not notBestgn:
+        if Bestgn:
             if write: print strSecRel(tot[gn] - totB[gn], tot[gn]), " ",
-        if not notOverallgn:
+        if Overallgn:
             if write: print strSecRel(tot[gn] - totO[gn], tot[gn]), " ",
         if write: print
     if write: print "\033[1mTot:        " + strSec(overallTot), " ",
-    if not notBest:
+    if Best:
         if write: print strSecRel(overallTot-overallTotB, overallTot), " ",
-    if not notOverall:
+    if Overall:
         if write: print strSecRel(overallTot-overallTotO, overallTot), " ",
     if write: print "\033[22m"
     if write: print
 
-    for gn in replaceBest:
-        if write2: print "New %d, %d best!" % gn
-        p["best"][gn]["flags"] = current[gn]["flags"]
-        p["best"][gn]["name"] = current[gn]["name"]
-        p["best"][gn]["time"] = current[gn]["time"]
-        p["best"][gn]["memory"] = current[gn]["memory"]
-
-    if notOverall or overallTot < overallTotO: # Replace overall
-        if write2: print "New overall best!"
-        for gn in gns:
-            p["overall"][gn]["flags"] = current[gn]["flags"]
-            p["overall"][gn]["name"] = current[gn]["name"]
-            p["overall"][gn]["time"] = current[gn]["time"]
-            p["overall"][gn]["memory"] = current[gn]["memory"]
-
-    p[current[gns[0]]["flags"]] = current
-
 def compareTwo(f1, f2):
-    if not p.has_key(f1) or not p.has_key(f2):
+    if not f1 in p or not f2 in p:
         print "Flags not in store!"
         exit(1)
 
@@ -515,21 +511,14 @@ def compareTwo(f1, f2):
     print
 
 def flagsFromPar(s):
-    if p.has_key(s): return s
+    if s in p:
+        return s
     for x in p.keys():
         if s == p[x][gns[0]]["name"]:
             return x
     s = int(s)
-    if s > 0:
-        i = 0
-        n = 0
-        k = p.keys()
-        while i < len(k):
-            while i < len(k) and (k[i] == "best" or k[i] == "overall"): i += 1
-            if i >= len(k): break
-            if n+1 == s: return k[i]
-            i += 1
-            n += 1
+    if s > 0 and s <= len(p):
+        return sorted(p.keys())[s-1]
     return None
 
 def plotSM():
@@ -539,7 +528,7 @@ def plotSM():
     seriesM = [[] for i in xrange(numPlots)]
     legend = []
 
-    xAxis[0] = [x for x in gns if x[1] == (5-x[0]) * 2]
+    xAxis[0] = [x for x in gns if x[1] == (6-x[0]) * 2]
     xAxis[0].sort()
 
     xAxis[1] = [x for x in gns if x[1] == 0]
@@ -549,26 +538,17 @@ def plotSM():
     xAxis[2].sort()
 
     def compgn(gn1, gn2):
-# Sort by time of best implementation
-        if not notBest:
-            return sum(p["best"][gn1]["time"]) - sum(p["best"][gn2]["time"])
-        else:
-# Sort by dimension of moduli space
-            if 3*gn1[0] - 3 + gn1[1] != 3*gn2[0] - 3 + gn2[1]:
-                return (3*gn1[0] - 3 + gn1[1]) - (3*gn2[0] - 3 + gn2[1])
-            else:
-                return gn1[0] - gn2[0]
+        return sum(p[best[gn1]][gn1]["time"]) - sum(p[best[gn2]][gn2]["time"])
     xAxis[3] = gns
     xAxis[3].sort(cmp = compgn)
 
     for x in p.keys():
-        if x != "best" and x != "overall":
-            for i in range(numPlots):
-                s = [sum(p[x][gn]["time"]) for gn in xAxis[i]]
-                seriesS[i].append(s)
-                s = [max(p[x][gn]["memory"]) for gn in xAxis[i]]
-                seriesM[i].append(s)
-            legend.append(compressFlags(x))
+        for i in range(numPlots):
+            s = [sum(p[x][gn]["time"]) for gn in xAxis[i]]
+            seriesS[i].append(s)
+            s = [max(p[x][gn]["memory"]) for gn in xAxis[i]]
+            seriesM[i].append(s)
+        legend.append(compressFlags(x))
 
     for i in range(numPlots):
         plot(xAxis[i], seriesS[i], "plot_%d_time_log.png" % i,
@@ -582,42 +562,42 @@ def plotSM():
              title = "Memory (MB)", logarithmic = False,
              scale = 1024.0, legend = legend)
 
+def gpDump(name):
+    if not name in p:
+        print "Flag not in store!"
+        exit(1)
+
+    for gn in p[f]:
+        x = p[f][gn]
+        print gn[0], gn[1], x["memory"][-1], sum(x["time"]), sum(x["found"]), sum(x["unconnected"]), sum(x["duplicated"])
+        
 def printStored():
     print "Stored:"
     i = 1
-    for x in p.keys():
-        if x != "best" and x != "overall":
-            print "%2d: %s" % (i, x)
-            i += 1
+    for x in sorted(p.keys()):
+        print "%2d: %s" % (i, x)
+        i += 1
 
 # Format:
 
-# p["best"] = best performance for the each (g,n)
+# p[best[gn]] = best performance for the each (g,n)
 #             may be from several programs
-# p["overall"] = best global performance
+# p[overall] = best global performance
 
-# p["best"][(g,n)]["flags"] = string containing the flags
-# p["best"][(g,n)]["time"] = tuple of values of time used for different K
-# p["best"][(g,n)]["memory"] = tuple of values of memory usage for different K
-# p["best"][(g,n)]["unconnected"] = tuple of numbers of unconnected graphs generated for different K
-# p["best"][(g,n)]["duplicated"] = tuple of numbers of duplicated graphs generated for different K
+# p[k][(g,n)]["flags"] = string containing the flags
+# p[k][(g,n)]["time"] = tuple of values of time used for different K
+# p[k][(g,n)]["memory"] = tuple of values of memory usage for different K
+# p[k][(g,n)]["unconnected"] = tuple of numbers of unconnected graphs generated for different K
+# p[k][(g,n)]["duplicated"] = tuple of numbers of duplicated graphs generated for different K
+# p[k][(g,n)]["found"] = tuple of numbers of stable graphs generated for different K
+# p[k][(g,n)]["found_codim"] = tuple of numbers of stable graphs generated for different codimensions
 
 # Exactness on all tests is required for storing a performance.
 
+
 if __name__ == "__main__":
-    notBest = False
-    notOverall = False
     p = shelve.open("performances", writeback = True)
-    if not p.has_key("best"):
-        notBest = True
-        p["best"] = {}
-        for gn in gns:
-            p["best"][gn] = {}
-    if not p.has_key("overall"):
-        notOverall = True
-        p["overall"] = {}
-        for gn in gns:
-            p["overall"][gn] = {}
+    best, overall = computeBest()
 
     if len(argv) == 1: exit(1)
     elif len(argv) == 2:
@@ -639,8 +619,11 @@ if __name__ == "__main__":
         elif argv[1] == "remove":
             f = flagsFromPar(argv[2])
             print "Removing ", argv[2], " ", f
-            if p.has_key(f):
+            if f in p:
                 del(p[f])
+        elif argv[1] == "dump":
+            f = flagsFromPar(argv[2])
+            gpDump(f)
         else:
             exit(1)
     elif len(argv) == 4:
