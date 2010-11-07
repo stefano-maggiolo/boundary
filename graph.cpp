@@ -233,6 +233,7 @@ Graph::Graph(const Graph& g2)
 #ifdef USE_LINES_NO_MAP
   aSorted = g2.aSorted;
 #endif
+  gDegrees = g2.gDegrees;
 #ifdef START_LAPACK_COMPUTATION
   laMatrix = g2.laMatrix;
   eigenvalues = g2.eigenvalues;
@@ -281,8 +282,9 @@ Graph::Graph(FILE* f)
         a[i][j] = a[j][i] = tmp;
         G += tmp;
       }
-
+#ifdef USE_NAUTY
   nautyK = -1;
+#endif
 }
 
 void
@@ -372,7 +374,19 @@ Graph::Equal(Graph& g2)
       return false;
     }
 #endif
+  if (gDegrees != g2.gDegrees)
+    {
+      return false;
+    }
   */
+  /*  bool n = EqualNauty(g2);
+  bool p = EqualPermutations(g2);
+  if (n != p)
+    {
+      fprintf(stderr, "\n\n\n\n\n\nNauty: %d, Perm: %d\n",  n, p);
+      PrintNormal();
+      g2.PrintNormal();
+      }*/
 #ifdef USE_NAUTY
   return EqualNauty(g2);
 #endif
@@ -603,7 +617,7 @@ Graph::ComputeDreadnaut(void)
 }
 
 bool
-Graph::EqualNauty(Graph& g2)
+  Graph::EqualNauty(Graph& g2)
 {
   // We don't assume that we already called ComputeDreadnaut
   if (nautyK == -1) ComputeDreadnaut();

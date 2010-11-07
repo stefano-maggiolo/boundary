@@ -46,7 +46,7 @@ main(int argc, char* argv[])
   else if (printer == Null)
     P = new NullGraphPrinter(stdout, g, n);
   c.Compute(*P, statistics, codim);
-
+  delete P;
   return 0;
 }
 

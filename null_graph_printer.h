@@ -17,7 +17,7 @@ class NullGraphPrinter : public GraphPrinter
   NullGraphPrinter(FILE* file, int g, int n) {}
   NullGraphPrinter(const NullGraphPrinter& L) {}
   void BeginPrint(void) {}
-  void PrintSomeGraph(map< int, vector< Graph > >& store) {}
+  void PrintSomeGraph(map< int, vector< Graph* > >& store) {}
   void EndPrint(void) {}
 };
 

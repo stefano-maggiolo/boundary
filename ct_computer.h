@@ -23,8 +23,8 @@ class CTComputer
 {
  public:
   CTComputer(int g, int n);
-  vector< Graph >& GetAllResults(void);
-  map< int, vector< Graph > >& GetAllResultsByCodimension(void);
+  vector< Graph* >& GetAllResults(void);
+  map< int, vector< Graph* > >& GetAllResultsByCodimension(void);
   void Compute(GraphPrinter &printer, enum Statistics stat, int computeOnlyCodim);
   void Compute(GraphPrinter &printer, enum Statistics stat);
   void Compute(GraphPrinter &printer);
@@ -50,7 +50,7 @@ class CTComputer
   bool computed;
 
   // Store all graphs for later computation.
-  map< int, vector< Graph > > store;
+  map< int, vector< Graph* > > store;
 
   // These are the main tools to ensure we don't generate two isomorphic
   // graphs. Roughly speaking, if d[i] = true, then we could order the

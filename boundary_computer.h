@@ -19,12 +19,21 @@
 
 using namespace std;
 
+typedef
+pair< int,
+  pair< vector< int >,
+  pair< vector< int >,
+  pair< vector< int >,
+  pair< vector< int >, vector< int > >
+  > > > >
+  LITTLE_STORE_INDEX;
+
 class BoundaryComputer: public Computer
 {
  public:
   BoundaryComputer(int g, int n);
-  vector< Graph >& GetAllResults(void);
-  map< int, vector< Graph > >& GetAllResultsByCodimension(void);
+  vector< Graph* >& GetAllResults(void);
+  map< int, vector< Graph* > >& GetAllResultsByCodimension(void);
   void Compute(GraphPrinter &printer, enum Statistics stat, int computeOnlyCodim);
   void Compute(GraphPrinter &printer, enum Statistics stat);
   void Compute(GraphPrinter &printer);
@@ -38,8 +47,7 @@ class BoundaryComputer: public Computer
   void bt_l(int i);
   void bt_a(int i, int j);
 
-  // Check if a graph satisfy the rules (visit to a depth first search
-  // to ensure the graph is connected.
+  // Check if a graph satisfy the rules (visit does a depth first search to ensure the graph is connected, duplicate ensure that the graph is not already in the store).
   bool correct();
   int visit(int i);
   bool duplicate();
@@ -50,7 +58,9 @@ class BoundaryComputer: public Computer
   bool computed;
 
   // Store all graphs for later computation.
-  map< int, vector< Graph > > store;
+  map< int, vector< Graph* > > store;
+  // Link graphs in a different way
+  map< LITTLE_STORE_INDEX, vector< Graph* > >prova;
 
   // These are the main tools to ensure we don't generate two isomorphic
   // graphs. Roughly speaking, if d[i] = true, then we could order the
@@ -77,9 +87,11 @@ class BoundaryComputer: public Computer
   // Compute only this codimension
   int computeOnlyCodim;
 
+#if defined (USE_DEGREES_MAP) || defined (USE_LINES_MAP)
   // Helper for updating degrees in the correct way
   int currentDivisionI;
   int currentDivisionJ;
+#endif
 
   // Statistics
   vector< int > statistics; // # graph, by codimension

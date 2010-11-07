@@ -27,6 +27,7 @@
 #include <vector>
 #include <map>
 #include <cstdio>
+#include <cassert>
 #ifdef START_LAPACK_COMPUTATION
 #include <lapackpp/laslv.h>
 #include <cmath>
@@ -110,6 +111,7 @@ class Graph
 #ifdef USE_LINES_NO_MAP
   vector< vector < int > > aSorted;
 #endif
+  vector< int > gDegrees;
 #ifdef START_LAPACK_COMPUTATION
   LaVectorDouble eigenvalues;
   LaGenMatDouble laMatrix;

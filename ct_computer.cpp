@@ -9,18 +9,18 @@ CTComputer::CTComputer(int g, int n)
   computed = false;
 }
 
-vector< Graph >&
+vector< Graph* >&
 CTComputer::GetAllResults(void)
 {
-  vector< Graph > *ret = new vector< Graph >();
+  vector< Graph* > *ret = new vector< Graph* >();
 
-  for (map< int, vector< Graph > >::iterator i = store.begin(); i != store.end(); ++i)
-    for (vector< Graph >::iterator j = i->second.begin(); j != i->second.end(); ++j)
+  for (map< int, vector< Graph* > >::iterator i = store.begin(); i != store.end(); ++i)
+    for (vector< Graph* >::iterator j = i->second.begin(); j != i->second.end(); ++j)
       ret->push_back(*j);
   return *ret;
 }
 
-map< int, vector< Graph > >&
+map< int, vector< Graph* > >&
 CTComputer::GetAllResultsByCodimension(void)
 {
   return store;
@@ -105,7 +105,7 @@ CTComputer::Compute(GraphPrinter &printer, enum Statistics stats, int computeOnl
 #endif
 
   printer.PrintSomeGraph(store);
-  for (map< int, vector< Graph > >::iterator s = store.begin(); s != store.end(); ++s)
+  for (map< int, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
     statistics[s->first] += s->second.size();
   store.clear();
 
@@ -181,7 +181,7 @@ CTComputer::Compute(GraphPrinter &printer, enum Statistics stats, int computeOnl
 #endif
 
       printer.PrintSomeGraph(store);
-      for (map< int, vector< Graph > >::iterator s = store.begin(); s != store.end(); ++s)
+      for (map< int, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
         statistics[s->first] += s->second.size();
       store.clear();
     }
@@ -419,7 +419,7 @@ void
 CTComputer::add_to_store(void)
 {
   Graph *ng = new Graph(graph);
-  store[ng->total_edges].push_back(*ng);
+  store[ng->total_edges].push_back(ng);
 }
 
 bool
@@ -444,20 +444,20 @@ CTComputer::correct()
 bool
 CTComputer::duplicate(void)
 {
-  for (vector< Graph >::iterator s = store[graph.total_edges].begin();
+  for (vector< Graph* >::iterator s = store[graph.total_edges].begin();
        s != store[graph.total_edges].end();
        s++)
-    if (s->K == graph.K &&
-        s->simple_divisions == graph.simple_divisions &&
-        s->g == graph.g &&
-        s->m == graph.m &&
+    if ((*s)->K == graph.K &&
+        (*s)->simple_divisions == graph.simple_divisions &&
+        (*s)->g == graph.g &&
+        (*s)->m == graph.m &&
 #ifdef USE_DEGREES_NO_MAP
-        s->aSortedDiv == graph.aSortedDiv &&
+        (*s)->aSortedDiv == graph.aSortedDiv &&
 #endif
 #ifdef USE_LINES_NO_MAP
-        s->aSorted == graph.aSorted &&
+        (*s)->aSorted == graph.aSorted &&
 #endif
-        s->Equal(graph))
+        (*s)->Equal(graph))
       return true;
   return false;
 }

@@ -9,18 +9,18 @@ BoundaryComputer2::BoundaryComputer2(int g, int n)
   computed = false;
 }
 
-vector< Graph >&
+vector< Graph* >&
 BoundaryComputer2::GetAllResults(void)
 {
-  vector< Graph > *ret = new vector< Graph >();
+  vector< Graph* > *ret = new vector< Graph* >();
 
-  for (map< int, vector< Graph > >::iterator i = store.begin(); i != store.end(); ++i)
-    for (vector< Graph >::iterator j = i->second.begin(); j != i->second.end(); ++j)
+  for (map< int, vector< Graph* > >::iterator i = store.begin(); i != store.end(); ++i)
+    for (vector< Graph* >::iterator j = i->second.begin(); j != i->second.end(); ++j)
       ret->push_back(*j);
   return *ret;
 }
 
-map< int, vector< Graph > >&
+map< int, vector< Graph* > >&
 BoundaryComputer2::GetAllResultsByCodimension(void)
 {
   return store;
@@ -117,7 +117,7 @@ BoundaryComputer2::Compute(GraphPrinter &printer, enum Statistics stats, int com
 #endif
 
   printer.PrintSomeGraph(store);
-  for (map< int, vector< Graph > >::iterator s = store.begin(); s != store.end(); ++s)
+  for (map< int, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
     statistics[s->first] += s->second.size();
   store.clear();
 
@@ -160,15 +160,15 @@ BoundaryComputer2::Compute(GraphPrinter &printer, enum Statistics stats, int com
       bt_simple_divisions(0);
 
       // Now we have all the possible graphs without considering g,m,l
-      for (map< int, vector< Graph > >::iterator t = intermediateStore.begin();
+      for (map< int, vector< Graph* > >::iterator t = intermediateStore.begin();
            t != intermediateStore.end(); ++t)
-        for (vector< Graph >::iterator s = t->second.begin();
+        for (vector< Graph* >::iterator s = t->second.begin();
              s != t->second.end();
              ++s)
           {
-            fprintf(stderr, "From the following graph weobtain...\n");
-            s->PrintNormal();
-            bt_g(*s, 0, 0);
+            fprintf(stderr, "From the following graph we obtain...\n");
+            (*s)->PrintNormal();
+            bt_g(**s, 0, 0);
           }
 
 #if HAVE_GETRUSAGE
@@ -208,7 +208,7 @@ BoundaryComputer2::Compute(GraphPrinter &printer, enum Statistics stats, int com
 #endif
 
       printer.PrintSomeGraph(store);
-      for (map< int, vector< Graph > >::iterator s = store.begin(); s != store.end(); ++s)
+      for (map< int, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
         statistics[s->first] += s->second.size();
       store.clear();
 
@@ -386,7 +386,7 @@ void
 BoundaryComputer2::addToIntermediateStore(void)
 {
   Graph *ng = new Graph(graph);
-  intermediateStore[ng->total_edges].push_back(*ng);
+  intermediateStore[ng->total_edges].push_back(ng);
 }
 
 bool
@@ -428,21 +428,21 @@ BoundaryComputer2::visit(int i)
 bool
 BoundaryComputer2::duplicate(void)
 {
-  for (vector< Graph >::iterator s = intermediateStore[graph.total_edges].begin();
+  for (vector< Graph* >::iterator s = intermediateStore[graph.total_edges].begin();
        s != intermediateStore[graph.total_edges].end();
        s++)
-    if (s->K == graph.K &&
-        s->simple_divisions == graph.simple_divisions &&
-        //        s->g == graph.g &&
-        //        s->m == graph.m &&
-        //        s->l == graph.l &&
+    if ((*s)->K == graph.K &&
+        (*s)->simple_divisions == graph.simple_divisions &&
+        //        (*s)->g == graph.g &&
+        //        (*s)->m == graph.m &&
+        //        (*s)->l == graph.l &&
 #ifdef USE_DEGREES_NO_MAP
-        s->aSortedDiv == graph.aSortedDiv &&
+        (*s)->aSortedDiv == graph.aSortedDiv &&
 #endif
 #ifdef USE_LINES_NO_MAP
-        s->aSorted == graph.aSorted &&
+        (*s)->aSorted == graph.aSorted &&
 #endif
-        s->Equal(graph))
+        (*s)->Equal(graph))
       return true;
   return false;
 }
@@ -550,7 +550,7 @@ BoundaryComputer2::addToStore(const Graph& g)
 {
   g.PrintNormal();
   Graph *ng = new Graph(g);
-  store[ng->total_edges].push_back(*ng);
+  store[ng->total_edges].push_back(ng);
 }
 
 void

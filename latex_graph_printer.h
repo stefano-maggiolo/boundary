@@ -17,7 +17,7 @@ class LaTeXGraphPrinter : public GraphPrinter
   LaTeXGraphPrinter(FILE* file, int g, int n);
   LaTeXGraphPrinter(const LaTeXGraphPrinter& L);
   void BeginPrint(void);
-  void PrintSomeGraph(map< int, vector< Graph > >& store);
+  void PrintSomeGraph(map< int, vector< Graph* > >& store);
   void EndPrint(void);
 
  private:
@@ -28,7 +28,6 @@ class LaTeXGraphPrinter : public GraphPrinter
   int printOnlyCodim;
   int rowLength;
   int G, M;
-  map< int, vector< Graph > > store;
 };
 
 #endif

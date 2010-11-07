@@ -25,8 +25,8 @@ class BoundaryComputer2
 {
  public:
   BoundaryComputer2(int g, int n);
-  vector< Graph >& GetAllResults(void);
-  map< int, vector< Graph > >& GetAllResultsByCodimension(void);
+  vector< Graph* >& GetAllResults(void);
+  map< int, vector< Graph* > >& GetAllResultsByCodimension(void);
   void Compute(GraphPrinter &printer, enum Statistics stat, int computeOnlyCodim);
   void Compute(GraphPrinter &printer, enum Statistics stat);
   void Compute(GraphPrinter &printer);
@@ -54,10 +54,10 @@ class BoundaryComputer2
   bool computed;
 
   // Store all graphs for later computation.
-  map< int, vector< Graph > > store;
+  map< int, vector< Graph* > > store;
 
   // Graphs with just simple_divisions, not actual g,m,l
-  map< int, vector< Graph > > intermediateStore;
+  map< int, vector< Graph* > > intermediateStore;
 
   // These are the main tools to ensure we don't generate two isomorphic
   // graphs. Roughly speaking, if d[i] = true, then we could order the

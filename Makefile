@@ -21,7 +21,7 @@ HDRS = $(wildcard *.h)
 #     natural numbers. If they differ, the graphs cannot be
 #     isomorphic.
 
-#   USE_LINES_NO_MAP (default=yes)
+#   USE_LINES_NO_MAP (default=no)
 
 #     For every strip [i...j-1, 1...K] as before, sorts each row of
 #     the graph g1 and g2, and then sorts the rows
@@ -36,7 +36,7 @@ HDRS = $(wildcard *.h)
 #     number of x's in the rectangles of the two graphs. If these
 #     numbers differ, g1 cannot be isomorphic to g2.
 
-#   USE_DEGREES_NO_MAP (default=yes)
+#   USE_DEGREES_NO_MAP (default=no)
 
 #     For every rectangle [i...j-1, i'...j'-1], as before, sorts each
 #     row of the rectangles, and the sorts the rows
@@ -63,8 +63,8 @@ HDRS = $(wildcard *.h)
 
 #     Use nauty to check if two graphs are isomorphic.
 
-CPPFLAGS = -O2 -DHAVE_GETRUSAGE=1 -DHAVE_MAXRSS=0
-STRATAFLAGS = -DUSE_NAUTY -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP
+CPPFLAGS = -O3 -DHAVE_GETRUSAGE=1 -DHAVE_MAXRSS=0
+STRATAFLAGS = -DUSE_NAUTY
 #BOUNDARYFLAGS = -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP -llapackpp -DSTART_LAPACK_COMPUTATION=9
 
 all: $(EXES)
