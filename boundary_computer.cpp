@@ -387,7 +387,9 @@ BoundaryComputer::bt_a(int i, int j)
       int end = graph.G - graph.sum - max(0, graph.K-2-graph.connections);
       for (int n = start; n <= end; n++)
         {
+#ifdef USE_LINES_MAP
           map< int, int > tmp;
+#endif
           // We check the following, to ensure that the sum = G and
           // that all genus 0 curve are stabilized.
           if (j == graph.K-1)
