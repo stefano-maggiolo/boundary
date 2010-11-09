@@ -36,7 +36,7 @@ main(int argc, char* argv[])
   PrintCompilationFlags();
 
   BoundaryComputer c(g, n);
-  GraphPrinter* P;
+  GraphPrinter* P = NULL;
   if (printer == LaTeX)
     P = new LaTeXGraphPrinter(stdout, g, n);
   else if (printer == Text)
@@ -163,23 +163,6 @@ PrintCompilationFlags(void)
   r[l-2] = '\0';
   fprintf(stderr, "Compilation flags: ");
   fprintf(stderr, "R=%s ", r+6);
-#ifdef USE_DEGREES_MAP
-  fprintf(stderr, "USE_DEGREES_MAP ");
-#endif
-#ifdef USE_DEGREES_NO_MAP
-  fprintf(stderr, "USE_DEGREES_NO_MAP ");
-#endif
-#ifdef USE_LINES_MAP
-  fprintf(stderr, "USE_LINES_MAP ");
-#endif
-#ifdef USE_LINES_NO_MAP
-  fprintf(stderr, "USE_LINES_NO_MAP ");
-#endif
-#ifdef START_LAPACK_COMPUTATION
-  fprintf(stderr, "START_LAPACK_COMPUTATION=%d ", START_LAPACK_COMPUTATION);
-#endif
-#ifdef USE_NAUTY
   fprintf(stderr, "USE_NAUTY ");
-#endif
   fprintf(stderr, "\n");
 }

@@ -5,16 +5,15 @@ using namespace std;
 void
 Graph::PrintMatrix(FILE* f) const
 {
-  for (int i = 0; i < a.size(); i++)
+  for (int i = 0; i < K; i++)
     {
       fprintf(f, "    ");
-      for (int j = 0; j < a[i].size(); j++)
+      for (int j = 0; j < K; j++)
         fprintf(f, "%d ", a[i][j]);
       fprintf(f, "\n");
     }
 }
 
-#ifdef USE_NAUTY
 void
 Graph::PrintMatrixSimple(FILE* f, graph* g) const
 {
@@ -30,22 +29,6 @@ Graph::PrintMatrixSimple(FILE* f, graph* g) const
       fprintf(f, "\n");
     }
 }
-#endif
-
-
-#ifdef USE_LINES_NO_MAP
-void
-Graph::PrintMatrixSorted(FILE* f) const
-{
-  for (int i = 0; i < aSorted.size(); i++)
-    {
-      fprintf(f, "    ");
-      for (int j = 0; j < aSorted[i].size(); j++)
-        fprintf(f, "%d ", aSorted[i][j]);
-      fprintf(f, "\n");
-    }
-}
-#endif
 
 void
 Graph::PrintNormal(FILE* f) const
@@ -68,10 +51,6 @@ Graph::PrintNormal(FILE* f) const
   fprintf(f, "  with loops ");
   for (int i = 0; i < K; i++)
     fprintf(f, "%d ", l[i]);
-  fprintf(f, "\n");
-  fprintf(f, "  with divisions ");
-  for (int i = 0; i < simple_divisions.size(); i++)
-    fprintf(f, "%d ", simple_divisions[i]);
   fprintf(f, "\n");
   fprintf(f, "  with adjacency matrix\n");
   PrintMatrix(f);
@@ -155,7 +134,7 @@ Graph::PrintLaTeX(FILE* f) const
 }
 
 void
-Graph::PrintPretty(FILE* f, int d, int r, const vector< bool >& divis,
+Graph::PrintPretty(FILE* f, int d, int r, const bool divis[],
                    int start, int end) const
 {
   fprintf(f, "Diagonale = %d, Riga = %d\n", d, r);
@@ -195,9 +174,7 @@ Graph::Graph(int g, int n, int k)
     M(n),
     K(k)
 {
-#ifdef USE_NAUTY
   this->nautyK = -1;
-#endif
 }
 
 Graph::Graph(const Graph& g2)
@@ -206,12 +183,6 @@ Graph::Graph(const Graph& g2)
   M = g2.M;
   K = g2.K;
 
-  g = g2.g;
-  m = g2.m;
-  l = g2.l;
-  a = g2.a;
-
-  edges = g2.edges;
   total_edges = g2.total_edges;
   p1 = g2.p1;
   sum = g2.sum;
@@ -220,34 +191,22 @@ Graph::Graph(const Graph& g2)
   is_rational_tail = g2.is_rational_tail;
   is_compact_type = g2.is_compact_type;
 
-  simple_divisions = g2.simple_divisions;
-#ifdef USE_DEGREES_MAP
-  degrees = g2.degrees;
-#endif
-#ifdef USE_DEGREES_NO_MAP
-  aSortedDiv = g2.aSortedDiv;
-#endif
-#ifdef USE_LINES_MAP
-  lines = g2.lines;
-#endif
-#ifdef USE_LINES_NO_MAP
-  aSorted = g2.aSorted;
-#endif
-  gDegrees = g2.gDegrees;
-#ifdef START_LAPACK_COMPUTATION
-  laMatrix = g2.laMatrix;
-  eigenvalues = g2.eigenvalues;
-#endif
-#ifdef USE_NAUTY
+  memmove(g, g2.g, sizeof(uchar)*K);
+  memmove(m, g2.m, sizeof(uchar)*K);
+  memmove(l, g2.l, sizeof(uchar)*K);
+  memmove(edges, g2.edges, sizeof(uchar)*K);
+  for (int i = 0; i < K; i++)
+    memmove(a[i], g2.a[i], sizeof(uchar)*K);
+  memmove(gDegrees, g2.gDegrees, sizeof(uchar)*(G+2));
+  memmove(divisions, g2.divisions, sizeof(bool)*(K+1));
   nautyK = g2.nautyK;
   nautyM = g2.nautyM;
-  memcpy(nautyGraph, g2.nautyGraph, MAXN*MAXM*sizeof(graph));
-#endif
+  memmove(nautyGraph, g2.nautyGraph, MAXN*MAXM*sizeof(graph));
 }
 
 Graph::Graph(FILE* f)
 {
-  unsigned char tmp;
+  uchar tmp;
 
   assert(fread(&tmp, sizeof(unsigned char), 1, f) == 1);
   K = tmp;
@@ -282,259 +241,48 @@ Graph::Graph(FILE* f)
         a[i][j] = a[j][i] = tmp;
         G += tmp;
       }
-#ifdef USE_NAUTY
   nautyK = -1;
-#endif
 }
 
 void
-Graph::ComputeDivisions(void)
+Graph::Clear(uchar newK)
 {
-  simple_divisions.clear();
-  simple_divisions.push_back(0);
-  for (int i = 1; i < K; ++i)
-    {
-      if (g[i-1] != g[i] ||
-          m[i-1] != m[i] ||
-          l[i-1] != l[i])
-        simple_divisions.push_back(i);
-    }
-}
+  K = newK;
+  // Every time, we rebuild the adjacency matrix with the right
+  // dimension.
+  memset(a, 0, sizeof(uchar) * MAX_K * MAX_K);
+  // We rebuild the genera and the marked points vectors.
+  memset(g, 0, sizeof(uchar)*K);
+  memset(m, 0, sizeof(uchar)*K);
+  memset(l, 0, sizeof(uchar)*K);
+  connections = 0;
+  memset(edges, 0, sizeof(uchar)*K);
+  total_edges = 0;
 
-#ifdef START_LAPACK_COMPUTATION
-void
-Graph::ComputeEigenvalues(void)
-{
-  if (K >= START_LAPACK_COMPUTATION)
-    {
-      laMatrix.resize(K, K);
-      eigenvalues.resize(K);
-      LaVectorDouble zero(K);
-      for (int itI = 0; itI < K; ++itI)
-        for (int itJ = 0; itJ < K; ++itJ)
-          laMatrix(itI, itJ) = a[itI][itJ];
-      LaEigSolve(laMatrix, eigenvalues, zero, laMatrix);
-    }
-}
-#endif
+  // And we start with the formula corresponding to no edge and
+  // no genera assigned.
+  sum = -K+1;
+  // No marked points assigned, by now.
+  msum = 0;
+  // Nor genus 0 curves.
+  p1 = 0;
 
-bool
-Graph::NextSpecialPerm(vector< int >& perm)
-{
-  vector< int >::iterator i = simple_divisions.end() - 1;
-  vector< int >::iterator b = perm.end(), e;
-  do
-    {
-      e = b;
-      b = perm.begin() + *i;
-      if (next_permutation(b, e)) return true;
-      --i;
-    } while (i >= simple_divisions.begin());
-  return false;
+  // We clear divisions, but divisions[0] exists by definition.
+  memset(divisions, 0, sizeof(bool)*(K+1));
+  divisions[0] = true;
 }
 
 bool
 Graph::Equal(Graph& g2)
 {
-  // These tests should be here, but we put it out because of efficiency reasons.
-  /*
-  if (K != g2.K)
-    {
-      return false;
-    }
-  if (simple_divisions != g2.simple_divisions)
-    {
-      return false;
-    }
-  if (g != g2.g || m != g2.m || l != g2.l)
-    {
-      return false;
-    }
-#ifdef USE_DEGREES_MAP
-  if (degrees != g2.degrees)
-    {
-      return false;
-    }
-#endif
-#ifdef USE_DEGREES_NO_MAP
-  if (aSortedDiv != g2.aSortedDiv)
-    {
-      return false;
-    }
-#endif
-#ifdef USE_LINES_MAP
-  if (lines != g2.lines)
-    {
-      return false;
-    }
-#endif
-#ifdef USE_LINES_NO_MAP
-  if (aSorted != g2.aSorted)
-    {
-      return false;
-    }
-#endif
-  if (gDegrees != g2.gDegrees)
-    {
-      return false;
-    }
-  */
-  /*  bool n = EqualNauty(g2);
-  bool p = EqualPermutations(g2);
-  if (n != p)
-    {
-      fprintf(stderr, "\n\n\n\n\n\nNauty: %d, Perm: %d\n",  n, p);
-      PrintNormal();
-      g2.PrintNormal();
-      }*/
-#ifdef USE_NAUTY
+  // EqualNauty assumes that K, g, m, l and gDegrees are equal.
   return EqualNauty(g2);
-#endif
-#ifdef START_LAPACK_COMPUTATION
-  if (K < START_LAPACK_COMPUTATION) return EqualPermutations(g2);
-  else return EqualLapack(g2);
-#else
-  return EqualPermutations(g2);
-#endif
 }
 
-#ifdef START_LAPACK_COMPUTATION
-bool
-Graph::EqualLapack(Graph& g2)
-{
-  // If the sorted vector of eigenvalues differ, the graphs are not
-  // isomorphic.
-  vector< bool > taken(K, false);
-  for (int i = 0; i < K; ++i)
-    {
-      int j;
-      for (j = 0; j < K; ++j)
-        if (!taken[j] && fabs(eigenvalues(i) - g2.eigenvalues(j)) < EPSILON)
-          {
-            taken[j] = true;
-            break;
-          }
-      if (j==K) return false;
-    }
-
-  // Find a eigenvalue with one-dimensional eigenspace and with all
-  // coefficients of the eigenvector distinct.
-  int column, column2;
-  bool goodColumn;
-  for (column = 0; column < K; ++column)
-    {
-      bool goodEigenvalue = true;
-      for (int j = 0; j < K; ++j)
-        if (column != j && fabs(eigenvalues(column) - eigenvalues(j)) < EPSILON)
-          {
-            goodEigenvalue = false;
-            break;
-          }
-      if (goodEigenvalue)
-        {
-          // Finding columns relative to a good eigenvalue with all
-          // different values. TODO: can we test here also for
-          // equality of the sorted vectors of coefficient of the
-          // eigenvectors?
-          goodColumn = true;
-          for (int i = 0; i < K; ++i)
-            {
-              for (int j = i+1; j < K; ++j)
-                if (fabs(laMatrix(i, column) - laMatrix(j, column)) < EPSILON)
-                  {
-                    goodColumn = false;
-                    break;
-                  }
-              if (!goodColumn) break;
-            }
-          if (goodColumn)
-            break;
-        }
-    }
-  // If there are no such eigenvalues, we use the usual method.
-  if (!goodColumn) return EqualPermutations(g2);
-
-  // Find the good eigenvalue in the spectrum of g2
-  int index2 = -1;
-  for (int i = 0; i < K; ++i)
-    if (fabs(eigenvalues(column) - g2.eigenvalues(i)) < EPSILON)
-      {
-        index2 = i;
-        break;
-      }
-  // This should not happen (we tested for equality before...)
-  if (index2 == -1) return false;
-
-  vector< int > permutation1(K, -1);
-  vector< int > permutation2(K, -1);
-  vector< bool > taken1(K, false);
-  vector< bool > taken2(K, false);
-  bool ok1 = true;
-  bool ok2 = true;
-
-  // First case: permutation of the eigenvectors' coefficients if the
-  // two are with the same signs.
-  for (int j = 0; j < K; ++j)
-    for (int i = 0; i < K; ++i)
-      if (!taken1[i] && fabs(laMatrix(j,column) - g2.laMatrix(i, index2)) < EPSILON)
-        {
-          permutation1[j] = i;
-          taken1[i] = true;
-          break;
-        }
-  // We test that we got indeed a permutation.
-  for (int j = 0; j < K; ++j)
-    if (permutation1[j] == -1)
-      {
-        ok1 = false;
-        break;
-      }
-
-  // Second case: if the two are of different signs.
-  for (int j = 0; j < K; ++j)
-    for (int i = 0; i < K; ++i)
-      if (!taken2[i] && fabs(laMatrix(j,column) + g2.laMatrix(i, index2)) < EPSILON)
-        {
-          permutation2[j] = i;
-          taken2[i] = true;
-          break;
-        }
-  // We test that we got indeed a permutation.
-  for (int j = 0; j < K; ++j)
-    if (permutation2[j] == -1)
-      {
-        ok2 = false;
-        break;
-      }
-
-  if (ok1 && PermutationOk(g2, permutation1)) return true;
-  else if (ok2 && PermutationOk(g2, permutation2)) return true;
-  else return false;
-}
-
-bool
-Graph::PermutationOk(Graph& g2, vector< int >& perm)
-{
-  for (int i = 0; i < K; ++i)
-    {
-      if (g2.g[perm[i]] != g[i] ||
-          g2.m[perm[i]] != m[i] ||
-          g2.l[perm[i]] != l[i])
-        return false;
-
-      for (int j = i+1; j < K; ++j)
-        if (g2.a[perm[i]][perm[j]] != a[i][j])
-          return false;
-    }
-  return true;
-}
-#endif
-
-#ifdef USE_NAUTY
 void
 Graph::ComputeDreadnaut(void)
 {
-  vector< vector< int > > translateEdges(K, vector< int >(K, -1));
+  int translateEdges[MAX_K][MAX_K];
 
   graph simple[MAXN*MAXM];
   int ptn[MAXN];
@@ -629,31 +377,37 @@ bool
 
   return ret;
 }
-#endif
+
+
+
+
+GraphClass::GraphClass(const Graph& o)
+{
+  G = o.G;
+  M = o.M;
+  K = o.K;
+  memmove(g, o.g, sizeof(uchar)*K);
+  memmove(m, o.m, sizeof(uchar)*K);
+  memmove(l, o.l, sizeof(uchar)*K);
+  memmove(gDegrees, o.gDegrees, sizeof(uchar)*(G+2));
+}
 
 bool
-Graph::EqualPermutations(Graph& g2)
+GraphClass::operator<(const GraphClass& o) const
 {
-  vector< int > perm;
-  for (int i = 0; i < g2.K; i++)
-    perm.push_back(i);
+  int t;
+  t = o.K - K;
+  if (t) return t < 0;
 
-  // Sure they're not trivially isomorphic, so we run a
-  // NextSpecialPerm in any case.
-  while(NextSpecialPerm(perm))
-    {
-      bool different = false;
-      for (int i = 0; i < K; ++i)
-        {
-          for (int j = i+1; j < K; ++j)
-            if (a[perm[i]][perm[j]] != g2.a[i][j])
-              {
-                different = true;
-                break;
-              }
-          if (different) break;
-        }
-      if (!different) return true;
-    }
-    return false;
+  t = memcmp(g, o.g, sizeof(uchar)*K);
+  if (t) return t < 0;
+
+  t = memcmp(m, o.m, sizeof(uchar)*K);
+  if (t) return t < 0;
+
+  t = memcmp(l, o.l, sizeof(uchar)*K);
+  if (t) return t < 0;
+
+  t = memcmp(gDegrees, o.gDegrees, sizeof(uchar)*(G+2));
+  return t < 0;
 }

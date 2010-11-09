@@ -17,7 +17,7 @@ class TextGraphPrinter : public GraphPrinter
   TextGraphPrinter(FILE* file, int g, int n);
   TextGraphPrinter(const TextGraphPrinter& L);
   void BeginPrint(void);
-  void PrintSomeGraph(map< int, vector< Graph* > >& store);
+  void PrintSomeGraph(map< uchar, vector< Graph* > >& store);
   void EndPrint(void);
 
  private:

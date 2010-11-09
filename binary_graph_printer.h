@@ -41,7 +41,7 @@ class BinaryGraphPrinter : public GraphPrinter
   BinaryGraphPrinter(FILE* file, int g, int n);
   BinaryGraphPrinter(const BinaryGraphPrinter& L);
   void BeginPrint(void);
-  void PrintSomeGraph(map< int, vector< Graph* > >& store);
+  void PrintSomeGraph(map< uchar, vector< Graph* > >& store);
   void EndPrint(void);
 
  private:

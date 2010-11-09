@@ -14,13 +14,13 @@ BoundaryComputer::GetAllResults(void)
 {
   vector< Graph* > *ret = new vector< Graph* >();
 
-  for (map< int, vector< Graph* > >::iterator i = store.begin(); i != store.end(); ++i)
+  for (map< uchar, vector< Graph* > >::iterator i = store.begin(); i != store.end(); ++i)
     for (vector< Graph* >::iterator j = i->second.begin(); j != i->second.end(); ++j)
       ret->push_back(*j);
   return *ret;
 }
 
-map< int, vector< Graph* > >&
+map< uchar, vector< Graph* > >&
 BoundaryComputer::GetAllResultsByCodimension(void)
 {
   return store;
@@ -58,11 +58,11 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
   for (int n = 0; n <= graph.G; n++)
     {
       tried[1]++;
-      graph.a.assign(1, vector< int >(1, graph.G-n));
-      graph.g.assign(1, n);
-      graph.m.assign(1, graph.M);
-      graph.l.assign(1, graph.G-n);
-      graph.edges.assign(1, 2*(graph.G-n));
+      graph.a[1][1] = graph.G-n;
+      graph.g[1] = n;
+      graph.m[1] = graph.M;
+      graph.l[1] = graph.G-n;
+      graph.edges[1] =  2*(graph.G-n);
       graph.total_edges = graph.G-n;
       if (computeOnlyCodim == -1 || computeOnlyCodim == graph.total_edges)
         {
@@ -108,47 +108,29 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
 #endif
 
   printer.PrintSomeGraph(store);
-  for (map< int, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
+  for (map< uchar, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
     {
       statistics[s->first] += s->second.size();
       for (vector< Graph* >::iterator t = s->second.begin(); t != s->second.end(); ++t)
         delete *t;
     }
   store.clear();
-  prova.clear();
+  divstore.clear();
 
   // We have at most 2G-2+M components for a curve of genus G and M
   // marked points.
-  for (graph.K = 2; graph.K <= 2*graph.G-2+graph.M; graph.K++)
+  for (int K = 2; K <= 2*graph.G-2+graph.M; K++)
     {
-      if (computeOnlyCodim != -1 && graph.K > computeOnlyCodim + 1) break;
+      if (computeOnlyCodim != -1 && K > computeOnlyCodim + 1) break;
 
-      if (stats == Full) fprintf(stderr, "K = %2d... ", graph.K);
+      if (stats == Full) fprintf(stderr, "K = %2d... ", K);
 #if HAVE_GETRUSAGE
       getrusage(RUSAGE_SELF, &rusageBegin);
 #endif
 
-      // Every time, we rebuild the adjacency matrix with the right
-      // dimension.
-      graph.a.assign(graph.K, vector< int >(graph.K, 0));
-      // We clear divisions, but divisions[0] exists by definition.
-      divisions.assign(graph.K, false);
-      divisions[0] = true;
-      // We rebuild the genera and the marked points vectors.
-      graph.g.assign(graph.K, 0);
-      graph.m.assign(graph.K, 0);
-      graph.l.assign(graph.K, 0);
-      graph.connections = 0;
-      graph.edges.assign(graph.K, 0);
-      graph.total_edges = 0;
+      // Every time, we rebuild the graph from scratch
+      graph.Clear(K);
 
-      // And we start with the formula corresponding to no edge and
-      // no genera assigned.
-      graph.sum = -graph.K+1;
-      // No marked points assigned, by now.
-      graph.msum = 0;
-      // Nor genus 0 curves.
-      graph.p1 = 0;
       // Let's start.
       bt_g(0);
 
@@ -189,14 +171,14 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
 #endif
 
       printer.PrintSomeGraph(store);
-      for (map< int, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
+      for (map< uchar, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
         {
           statistics[s->first] += s->second.size();
           for (vector< Graph* >::iterator t = s->second.begin(); t != s->second.end(); ++t)
             delete *t;
         }
       store.clear();
-      prova.clear();
+      divstore.clear();
     }
 
   printer.EndPrint();
@@ -242,14 +224,14 @@ BoundaryComputer::bt_g(int i)
           // If we are increasing the genus with respect to the
           // previous one, we cannote exchange anymore components < i
           // with components >= i, so we put a division.
-          if (n > start) divisions[i] = true;
+          if (n > start) graph.divisions[i] = true;
 
           bt_g(i+1);
 
           // We go back to the previous situation
           graph.sum -= n;
           if (n == 0) graph.p1--;
-          divisions[i] = false;
+          graph.divisions[i] = false;
         }
     }
   else // If we decided all the genera, we go to assign values to the marked points
@@ -263,7 +245,7 @@ BoundaryComputer::bt_m(int i)
 	{
 	// We impose the vector m to be non-decreasing for i's
 	// such that the genus is equal, to avoid generating isomorphic graphs.
-      int start = divisions[i]? 0: graph.m[i-1];
+      int start = graph.divisions[i]? 0: graph.m[i-1];
 	// m[i] is always smaller or equal than M-msum.
       int end = graph.M-graph.msum;
       for (int n = start; n <= end; n++)
@@ -271,14 +253,14 @@ BoundaryComputer::bt_m(int i)
 		  if (i == graph.K-1 && n != end) continue;
 
 		  graph.m[i] = n;
-		  bool tmp = divisions[i];
-		  if (n > start) divisions[i] = true;
+		  bool tmp = graph.divisions[i];
+		  if (n > start) graph.divisions[i] = true;
 		  graph.msum += n;
 
 		  bt_m(i+1);
 
 		  graph.msum -= n;
-		  divisions[i] = tmp;
+		  graph.divisions[i] = tmp;
 		}
 
 	}
@@ -297,7 +279,7 @@ BoundaryComputer::bt_l(int i)
       // not the first element after a division, we may assume to have
       // permuted the components in such a way that they are
       // non-decreasing.
-      int start = divisions[i]? 0: graph.l[i-1];
+      int start = graph.divisions[i]? 0: graph.l[i-1];
 
       // Sure l[i] cannot exceed G-sum; moreover we will have to put
       // at least other K-2 edges to connect the graph.
@@ -307,8 +289,8 @@ BoundaryComputer::bt_l(int i)
           // We do the changes induced by l[i] = n.
           graph.l[i] = n;
           graph.a[i][i] = n;
-          bool tmp = divisions[i];
-          if (n > start) divisions[i] = true;
+          bool tmp = graph.divisions[i];
+          if (n > start) graph.divisions[i] = true;
           graph.edges[i] += 2*n;
           graph.total_edges += n;
           graph.sum += n;
@@ -319,29 +301,14 @@ BoundaryComputer::bt_l(int i)
           graph.sum -= n;
           graph.total_edges -= n;
           graph.edges[i] -= 2*n;
-          divisions[i] = tmp;
+          graph.divisions[i] = tmp;
         }
     }
   else // If we decided all diagonal elements, we go to assign values
        // to the rest of the upper triangle of the matrix, row by row,
        // from left to right.
     {
-      graph.ComputeDivisions();
-#if defined (USE_DEGREES_MAP) || defined (USE_LINES_MAP)
-      currentDivisionI = 0;
-      currentDivisionJ = 0;
-      int sdSize = graph.simple_divisions.size();
-#endif
-#ifdef USE_DEGREES_MAP
-      graph.degrees.assign(sdSize, vector< map< int, int > >(sdSize));
-#endif
-#ifdef USE_LINES_MAP
-      graph.lines.assign(sdSize, map< map< int, int >, int >());
-#endif
-      int topDegree = graph.G + 1;
-      for (int i = 0; i < graph.K; i++)
-        topDegree -= graph.g[i];
-      graph.gDegrees.assign(topDegree + 1, 0);
+      memset(graph.gDegrees, 0, sizeof(uchar)*(graph.G+2));
       bt_a(0, 1);
     }
 }
@@ -354,18 +321,7 @@ BoundaryComputer::bt_a(int i, int j)
     {
       i++;
       j = i+1;
-#if defined (USE_LINES_MAP) || defined (USE_DEGREES_MAP)
-      if ((currentDivisionI + 1 < graph.simple_divisions.size() - 1) &&
-          (graph.simple_divisions[currentDivisionI+1] == i))
-        currentDivisionI++;
-      currentDivisionJ = currentDivisionI;
-#endif
     }
-#if defined (USE_LINES_MAP) || defined(USE_DEGREES_MAP)
-  if ((currentDivisionJ+1 < graph.simple_divisions.size()-1) &&
-      (graph.simple_divisions[currentDivisionJ+1] == j))
-  currentDivisionJ++;
-#endif
 
   if (i < graph.K-1) // We have to assign a[i][j].
     {
@@ -373,12 +329,12 @@ BoundaryComputer::bt_a(int i, int j)
       // If i is not the first element in its non-divisions range,
       // then we can assume it is not less then the element in the
       // previous row.
-      int start_i = divisions[i]? 0: graph.a[i-1][j];
+      int start_i = graph.divisions[i]? 0: graph.a[i-1][j];
       // Also, if j is not the first element in its non-divisions
       // range, than we can assume it is not less than the element in
       // the previous column.
       int start_j = 0;
-      if (j > i+1 && !divisions[j]) start_j = graph.a[i][j-1];
+      if (j > i+1 && !graph.divisions[j]) start_j = graph.a[i][j-1];
       int start = max(start_i, start_j);
 
       // Sure a[i][j] cannot exceed G-sum; but if we put c connections
@@ -387,9 +343,6 @@ BoundaryComputer::bt_a(int i, int j)
       int end = graph.G - graph.sum - max(0, graph.K-2-graph.connections);
       for (int n = start; n <= end; n++)
         {
-#ifdef USE_LINES_MAP
-          map< int, int > tmp;
-#endif
           // We check the following, to ensure that the sum = G and
           // that all genus 0 curve are stabilized.
           if (j == graph.K-1)
@@ -416,65 +369,31 @@ BoundaryComputer::bt_a(int i, int j)
                   else if (i == graph.K-2 && graph.edges[graph.K-1] == 2*graph.l[graph.K-1]) continue;
                 }
               // All right!
-#ifdef USE_LINES_MAP
-              for (int iter = 0; iter < graph.K-1; iter++)
-                if (iter != i)
-                  ++tmp[graph.a[i][iter]];
-              ++tmp[n];
-              ++graph.lines[currentDivisionI][tmp];
-#endif
             }
           // Changes induced by a[i][j] = n.
           graph.a[i][j] = n;
           graph.a[j][i] = n;
-#ifdef USE_DEGREES_MAP
-          ++graph.degrees[currentDivisionI][currentDivisionJ][n];
-          ++graph.degrees[currentDivisionJ][currentDivisionI][n];
-#endif
-          bool tmpi = divisions[i], tmpj = divisions[j];
+          bool tmpi = graph.divisions[i], tmpj = graph.divisions[j];
           if (n > 0) graph.connections++;
           graph.edges[i] += n;
           graph.edges[j] += n;
           graph.total_edges += n;
-          if (n > start_i) divisions[i] = true;
-          if (n > start_j && j > i+1) divisions[j] = true;
+          if (n > start_i) graph.divisions[i] = true;
+          if (n > start_j && j > i+1) graph.divisions[j] = true;
           graph.sum += n;
-#if defined (USE_DEGREES_MAP) || defined (USE_LINES_MAP)
-          int tmpI = currentDivisionI, tmpJ = currentDivisionJ;
-#endif
           graph.gDegrees[n]++;
 
           bt_a(i, j+1);
 
           // We go back to the previous situation.
           graph.gDegrees[n]--;
-#if defined (USE_DEGREES_MAP) || defined (USE_LINES_MAP)
-          currentDivisionI = tmpI;
-          currentDivisionJ = tmpJ;
-#endif
-#ifdef USE_DEGREES_MAP
-          --graph.degrees[currentDivisionI][currentDivisionJ][n];
-          --graph.degrees[currentDivisionJ][currentDivisionI][n];
-          if (graph.degrees[currentDivisionI][currentDivisionJ][n] == 0)
-            graph.degrees[currentDivisionI][currentDivisionJ].erase(n);
-          if (graph.degrees[currentDivisionJ][currentDivisionI][n] == 0)
-            graph.degrees[currentDivisionJ][currentDivisionI].erase(n);
-#endif
           graph.sum -= n;
-          divisions[i] = tmpi;
-          divisions[j] = tmpj;
+          graph.divisions[i] = tmpi;
+          graph.divisions[j] = tmpj;
           graph.edges[i] -= n;
           graph.edges[j] -= n;
           graph.total_edges -= n;
           if (n > 0) graph.connections--;
-#ifdef USE_LINES_MAP
-          if (j == graph.K-1)
-            {
-              --graph.lines[currentDivisionI][tmp];
-              if (graph.lines[currentDivisionI][tmp] == 0)
-                graph.lines[currentDivisionI].erase(tmp);
-            }
-#endif
         }
     }
   else // If we decided all the matrix, we check if the graph is
@@ -483,69 +402,14 @@ BoundaryComputer::bt_a(int i, int j)
       if (computeOnlyCodim == -1 ||
           graph.total_edges == computeOnlyCodim)
         {
-          // TODO: all these procedures should be in the Graph class.
-#ifdef USE_LINES_MAP
-          map< int, int > tmp;
-          for (int iter = 0; iter < graph.K; iter++)
-            if (iter != i)
-              ++tmp[graph.a[i][iter]];
-          ++graph.lines[currentDivisionI][tmp];
-#endif
-#ifdef USE_LINES_NO_MAP
-          graph.aSorted = graph.a;
-          for (int iter = 0; iter < graph.K; ++iter)
-            sort(graph.aSorted[iter].begin(), graph.aSorted[iter].end());
-          for (int iter = 0; iter < graph.simple_divisions.size()-1; ++iter)
-            sort(graph.aSorted.begin() + graph.simple_divisions[iter],
-                 graph.aSorted.begin() + graph.simple_divisions[iter+1]);
-          sort(graph.aSorted.begin() +
-               graph.simple_divisions[graph.simple_divisions.size()-1],
-               graph.aSorted.end());
-#endif
-#ifdef USE_DEGREES_NO_MAP
-          graph.aSortedDiv = graph.a;
-          int sdSize = graph.simple_divisions.size();
-          graph.simple_divisions.push_back(graph.K);
-          for (int iterI = 0; iterI < sdSize; ++iterI)
-            for (int iterJ = 0; iterJ < sdSize; ++iterJ)
-              {
-                vector< vector< int > > tmp;
-                int beginI = graph.simple_divisions[iterI];
-                int endI = graph.simple_divisions[iterI+1];
-                int beginJ = graph.simple_divisions[iterJ];
-                int endJ = graph.simple_divisions[iterJ+1];
-                for (int itI = beginI; itI < endI; ++itI)
-                  {
-                    vector< int > tmp2(graph.a[itI].begin()+beginJ,
-                                       graph.a[itI].begin()+endJ);
-                    sort(tmp2.begin(), tmp2.end());
-                    tmp.push_back(tmp2);
-                  }
-                sort(tmp.begin(), tmp.end());
-                for (int itI = beginI; itI < endI; ++itI)
-                  for (int itJ = beginJ; itJ < endJ; ++itJ)
-                    graph.aSortedDiv[itI][itJ] = tmp[itI-beginI][itJ-beginJ];
-              }
-          graph.simple_divisions.pop_back();
-#endif
-#ifdef START_LAPACK_COMPUTATION
-          graph.ComputeEigenvalues();
-#endif
-#ifdef USE_NAUTY
           // Note: we could also compute all canonical labelling
           // whether or not we'll use it: for example, for (6,0) there
           // are just ~700 graphs for which the canonical labelling
           // won't be used, but they are with K = 3.
           graph.nautyK = -1;
-#endif
 
           if (correct()) add_to_store();
 
-#ifdef USE_LINES_MAP
-          --graph.lines[currentDivisionI][tmp];
-          if (graph.lines[currentDivisionI][tmp] == 0)
-            graph.lines[currentDivisionI].erase(tmp);
-#endif
         }
     }
 }
@@ -555,8 +419,8 @@ BoundaryComputer::add_to_store(void)
 {
   Graph *ng = new Graph(graph);
   store[ng->total_edges].push_back(ng);
-  LITTLE_STORE_INDEX bucket = make_pair(ng->K, make_pair(ng->g, make_pair(ng->m, make_pair(ng->l, make_pair(ng->simple_divisions, ng->gDegrees)))));
-  prova[bucket].push_back(ng);
+  GraphClass bucket(graph);
+  divstore[bucket].push_back(ng);
 }
 
 bool
@@ -566,7 +430,7 @@ BoundaryComputer::correct()
   // First condition (sum = G): already ensured.
   // Second condition (stability) already ensured.
   // Third condition (connectedness).
-  v.assign(graph.K, false);
+  memset(v, 0, sizeof(bool)*graph.K);
   if (visit(0) < graph.K)
     {
       unconnected[graph.K]++;
@@ -598,23 +462,10 @@ BoundaryComputer::visit(int i)
 bool
 BoundaryComputer::duplicate(void)
 {
-  LITTLE_STORE_INDEX bucket = make_pair(graph.K, make_pair(graph.g, make_pair(graph.m, make_pair(graph.l, make_pair(graph.simple_divisions, graph.gDegrees)))));
-  vector< Graph* > littlestore = prova[bucket];
+  GraphClass bucket(graph);
+  vector< Graph* > littlestore = divstore[bucket];
   for (vector< Graph* >::iterator s = littlestore.begin(); s != littlestore.end(); ++s)
-    if (//(*s)->gDegrees == graph.gDegrees &&
-#ifdef USE_DEGREES_MAP
-        (*s)->degrees == graph.degrees &&
-#endif
-#ifdef USE_DEGREES_NO_MAP
-        (*s)->aSortedDiv == graph.aSortedDiv &&
-#endif
-#ifdef USE_LINES_MAP
-        (*s)->lines == graph.lines &&
-#endif
-#ifdef USE_LINES_NO_MAP
-        (*s)->aSorted == graph.aSorted &&
-#endif
-        (*s)->Equal(graph))
+    if ((*s)->Equal(graph))
       return true;
   return false;
 }
@@ -630,18 +481,18 @@ BoundaryComputer::Statistics(FILE* file)
 
 #if HAVE_GETRUSAGE
   int ms = 0;
-  for (int i = 0; i < statisticsTime.size(); i++)
+  for (int i = 0; i < (int)statisticsTime.size(); i++)
     ms += statisticsTime[i];
   fprintf(file, "Total time: %d.%01d s.\n", ms/1000, ms/100%10);
   int kB = 0;
-  for (int i = 0; i < statisticsTime.size(); i++)
+  for (int i = 0; i < (int)statisticsTime.size(); i++)
     if (kB < statisticsMemory[i]) kB = statisticsMemory[i];
   fprintf(file, "Total memory: %d.%01d MB.\n", kB/1024, kB/102 % 10);
 #endif
 
   int s = 0;
   fprintf(file, "Tried       ");
-  for (int i = 0; i < tried.size(); i++)
+  for (int i = 0; i < (int)tried.size(); i++)
     {
       fprintf(file, "%5d ", tried[i]);
       s += tried[i];
@@ -649,7 +500,7 @@ BoundaryComputer::Statistics(FILE* file)
   fprintf(file, "= %7d\n", s);
   s=0;
   fprintf(file, "Unconnected ");
-  for (int i = 0; i < unconnected.size(); i++)
+  for (int i = 0; i < (int)unconnected.size(); i++)
     {
       fprintf(file, "%5d ", unconnected[i]);
       s += unconnected[i];
@@ -657,7 +508,7 @@ BoundaryComputer::Statistics(FILE* file)
   fprintf(file, "= %7d\n", s);
   s=0;
   fprintf(file, "Duplicated  ");
-  for (int i = 0; i < duplicated.size(); i++)
+  for (int i = 0; i < (int)duplicated.size(); i++)
     {
       fprintf(file, "%5d ", duplicated[i]);
       s += duplicated[i];
@@ -665,7 +516,7 @@ BoundaryComputer::Statistics(FILE* file)
   fprintf(file, "= %7d\n", s);
   s=0;
   fprintf(file, "Found       ");
-  for (int i = 0; i < found.size(); i++)
+  for (int i = 0; i < (int)found.size(); i++)
     {
       fprintf(file, "%5d ", found[i]);
       s += found[i];
@@ -673,7 +524,7 @@ BoundaryComputer::Statistics(FILE* file)
   fprintf(file, "= %7d\n", s);
 
   // Statistic subdivided by number of edges.
-  for (int i = 0; i < statistics.size(); ++i)
+  for (int i = 0; i < (int)statistics.size(); ++i)
     fprintf(file, "%3d: %5d\n", i, statistics[i]);
 }
 
@@ -689,32 +540,32 @@ BoundaryComputer::TerseStatistics(FILE* file)
   fprintf(file, "(\n");
 
   fprintf(file, " (");
-  for (int i = 0; i < statisticsTime.size(); i++)
+  for (int i = 0; i < (int)statisticsTime.size(); i++)
     fprintf(file, "%d,", statisticsTime[i]);
   fprintf(file, "),\n");
 
   fprintf(file, " (");
-  for (int i = 0; i < statisticsMemory.size(); i++)
+  for (int i = 0; i < (int)statisticsMemory.size(); i++)
     fprintf(file, "%d,", statisticsMemory[i]);
   fprintf(file, "),\n");
 
   fprintf(file, " (");
-  for (int i = 0; i < found.size(); i++)
+  for (int i = 0; i < (int)found.size(); i++)
     fprintf(file, "%d,", found[i]);
   fprintf(file, "),\n");
 
   fprintf(file, " (");
-  for (int i = 0; i < statistics.size(); i++)
+  for (int i = 0; i < (int)statistics.size(); i++)
     fprintf(file, "%d,", statistics[i]);
   fprintf(file, "),\n");
 
   fprintf(file, " (");
-  for (int i = 0; i < unconnected.size(); i++)
+  for (int i = 0; i < (int)unconnected.size(); i++)
     fprintf(file, "%d,", unconnected[i]);
   fprintf(file, "),\n");
 
   fprintf(file, " (");
-  for (int i = 0; i < duplicated.size(); i++)
+  for (int i = 0; i < (int)duplicated.size(); i++)
     fprintf(file, "%d,", duplicated[i]);
   fprintf(file, "),\n");
 

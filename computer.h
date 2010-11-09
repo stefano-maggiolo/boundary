@@ -16,7 +16,7 @@ class Computer
 {
  public:
   virtual vector< Graph* >& GetAllResults(void) = 0;
-  virtual map< int, vector< Graph* > >& GetAllResultsByCodimension(void) = 0;
+  virtual map< uchar, vector< Graph* > >& GetAllResultsByCodimension(void) = 0;
   virtual void Compute(GraphPrinter &printer, enum Statistics stat, int computeOnlyCodim) = 0;
   virtual void Compute(GraphPrinter &printer, enum Statistics stat) = 0;
   virtual void Compute(GraphPrinter &printer) = 0;

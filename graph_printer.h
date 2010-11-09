@@ -15,7 +15,7 @@ class GraphPrinter
 {
  public:
   virtual void BeginPrint(void) = 0;
-  virtual void PrintSomeGraph(map< int, vector< Graph* > >& store) = 0;
+  virtual void PrintSomeGraph(map< uchar, vector< Graph* > >& store) = 0;
   virtual void EndPrint(void) = 0;
 };
 

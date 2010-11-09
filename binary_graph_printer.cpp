@@ -34,10 +34,10 @@ BinaryGraphPrinter::BeginPrint(void)
 }
 
 void
-BinaryGraphPrinter::PrintSomeGraph(map< int, vector< Graph* > >& store)
+BinaryGraphPrinter::PrintSomeGraph(map< uchar, vector< Graph* > >& store)
 {
   for (int i = 0; i <= 3*G-3+M; i++)
-    for (map< int, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
+    for (map< uchar, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
       for (vector< Graph* >::iterator t = s->second.begin(); t != s->second.end(); ++t)
         if ((*t)->total_edges == i)
           if (printOnlyCodim == -1 || (*t)->total_edges == printOnlyCodim)

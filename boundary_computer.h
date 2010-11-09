@@ -19,21 +19,12 @@
 
 using namespace std;
 
-typedef
-pair< int,
-  pair< vector< int >,
-  pair< vector< int >,
-  pair< vector< int >,
-  pair< vector< int >, vector< int > >
-  > > > >
-  LITTLE_STORE_INDEX;
-
 class BoundaryComputer: public Computer
 {
  public:
   BoundaryComputer(int g, int n);
   vector< Graph* >& GetAllResults(void);
-  map< int, vector< Graph* > >& GetAllResultsByCodimension(void);
+  map< uchar, vector< Graph* > >& GetAllResultsByCodimension(void);
   void Compute(GraphPrinter &printer, enum Statistics stat, int computeOnlyCodim);
   void Compute(GraphPrinter &printer, enum Statistics stat);
   void Compute(GraphPrinter &printer);
@@ -58,18 +49,9 @@ class BoundaryComputer: public Computer
   bool computed;
 
   // Store all graphs for later computation.
-  map< int, vector< Graph* > > store;
+  map< uchar, vector< Graph* > > store;
   // Link graphs in a different way
-  map< LITTLE_STORE_INDEX, vector< Graph* > >prova;
-
-  // These are the main tools to ensure we don't generate two isomorphic
-  // graphs. Roughly speaking, if d[i] = true, then we could order the
-  // terms with index < i and >= i separetely. Note that d[i] is the
-  // division *before* the i-th row and column. Moreover, we don't need
-  // horizontal and vertical divisions since the adjacency matrix can be
-  // permuted only with permutation induces by S_K (i.e., by a
-  // permutation of {1,... , K}, not by a generic permutation matrix.
-  vector< bool > divisions;
+  map< GraphClass, vector< Graph* > > divstore;
 
   // Counters for checked graphs and graphs that satisfies all the
   // rules; both are subdivided by K.
@@ -79,19 +61,13 @@ class BoundaryComputer: public Computer
   vector< int > unconnected;
 
   // Used by the depth first search.
-  vector<bool> v ;
+  bool v[MAX_K];
 
   // Current graph
   Graph graph;
 
   // Compute only this codimension
   int computeOnlyCodim;
-
-#if defined (USE_DEGREES_MAP) || defined (USE_LINES_MAP)
-  // Helper for updating degrees in the correct way
-  int currentDivisionI;
-  int currentDivisionJ;
-#endif
 
   // Statistics
   vector< int > statistics; // # graph, by codimension
