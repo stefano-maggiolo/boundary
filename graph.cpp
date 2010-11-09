@@ -185,6 +185,7 @@ Graph::Graph(const Graph& g2)
 
   total_edges = g2.total_edges;
   p1 = g2.p1;
+  m_p1 = g2.m_p1;
   sum = g2.sum;
   msum = g2.msum;
   connections = g2.connections;
@@ -266,6 +267,7 @@ Graph::Clear(uchar newK)
   msum = 0;
   // Nor genus 0 curves.
   p1 = 0;
+  m_p1 = 0;
 
   // We clear divisions, but divisions[0] exists by definition.
   memset(divisions, 0, sizeof(bool)*(K+1));

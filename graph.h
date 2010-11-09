@@ -72,6 +72,8 @@ class Graph
   uchar edges[MAX_K];
   // How many genus 0 components are there
   uchar p1;
+  // Stabilizing (m_C <= 2) marked points on genus 0 components
+  uchar m_p1;
   // Total number of edges
   uchar total_edges;
   // If it is rational tail

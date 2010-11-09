@@ -121,6 +121,9 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
   // marked points.
   for (int K = 2; K <= 2*graph.G-2+graph.M; K++)
     {
+      // bla_g.clear();
+      // bla_gn.clear();
+      // bla_gnl.clear();
       if (computeOnlyCodim != -1 && K > computeOnlyCodim + 1) break;
 
       if (stats == Full) fprintf(stderr, "K = %2d... ", K);
@@ -179,6 +182,16 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
         }
       store.clear();
       divstore.clear();
+      // for (map< pair< vector< int >, vector< int > >, int >::iterator s = bla_gn.begin(); s != bla_gn.end(); ++s)
+      //   {
+      //     fprintf(stderr, "%6d     (", s->second);
+      //     for (int i = 0; i < K-1; i++)
+      //       fprintf(stderr, "%d,", s->first.first[i]);
+      //     fprintf(stderr, "%d) (", s->first.first[K-1]);
+      //     for (int i = 0; i < K-1; i++)
+      //       fprintf(stderr, "%d,", s->first.second[i]);
+      //     fprintf(stderr, "%d)\n", s->first.second[K-1]);
+      //   }
     }
 
   printer.EndPrint();
@@ -210,11 +223,13 @@ BoundaryComputer::bt_g(int i)
       int start = 0;
       if (i > 0) start = graph.g[i-1];
 
+      // TODO: update this comment
       // Since we want G = sum + SUM_{j>=i}g[j] + edges, we have
       // 2edges+marked>=3*p1 (to stabilize the genus 0 curves), edges>=K-1
       // (to connect the graph) and g[j]>=g[i], then we get the
       // following.
-      int end = (graph.G - graph.sum - max((3*graph.p1-graph.M+1)/2, graph.K-1)) / (graph.K-i);
+      int end = graph.G - graph.sum - max(graph.K-1, graph.p1+(graph.K-graph.M+1)/2);
+      end /=  (graph.K-i);
       for (int n = start; n <= end; n++)
         {
           // We do the changes induced by g[i] = n.
@@ -235,7 +250,10 @@ BoundaryComputer::bt_g(int i)
         }
     }
   else // If we decided all the genera, we go to assign values to the marked points
-    bt_m(0);
+    {
+      // bla_g[vector<int>(graph.g,graph.g+graph.K)] = 0;
+      bt_m(0);
+    }
 }
 
 void
@@ -243,22 +261,34 @@ BoundaryComputer::bt_m(int i)
 {
   if (i < graph.K) // We have to assign m[i].
 	{
-	// We impose the vector m to be non-decreasing for i's
-	// such that the genus is equal, to avoid generating isomorphic graphs.
+      bool is_p1 = i < graph.p1;
+      // We impose the vector m to be non-decreasing for i's such that
+      // the genus is equal, to avoid generating isomorphic graphs.
       int start = graph.divisions[i]? 0: graph.m[i-1];
-	// m[i] is always smaller or equal than M-msum.
+      // For m, start may change from the one we get with divisions;
+      // but we have to use that one to compute further divisions,
+      // hence we save it in startdiv.
+      int startdiv = start;
+      // m[i] is always smaller or equal than M-msum.
       int end = graph.M-graph.msum;
+      if (is_p1)
+        {
+          start = max(start, -graph.m_p1+graph.K-2*graph.G+2*graph.sum+2*i+2);
+          end /= graph.p1 - i;
+        }
       for (int n = start; n <= end; n++)
 		{
 		  if (i == graph.K-1 && n != end) continue;
 
 		  graph.m[i] = n;
 		  bool tmp = graph.divisions[i];
-		  if (n > start) graph.divisions[i] = true;
+		  if (n > startdiv) graph.divisions[i] = true;
 		  graph.msum += n;
+          if (is_p1) graph.m_p1 += min(n, 2);
 
 		  bt_m(i+1);
 
+          if (is_p1) graph.m_p1 -= min(n, 2);
 		  graph.msum -= n;
 		  graph.divisions[i] = tmp;
 		}
@@ -266,7 +296,10 @@ BoundaryComputer::bt_m(int i)
 	}
   else  // If we decided all the marked points, we go to assign values
         // to the diagonal of the adjacency matrix.
-    bt_l(0);
+    {
+      // bla_gn[make_pair(vector<int>(graph.g,graph.g+graph.K), vector<int>(graph.m,graph.m+graph.K))] = 0;
+      bt_l(0);
+    }
 }
 
 void
@@ -274,6 +307,7 @@ BoundaryComputer::bt_l(int i)
 {
   if (i < graph.K) // We have to assign l[i].
     {
+      bool is_p1 = i < graph.p1;
       // We may permute i with the elements inside all the range
       // around i that does not meet divisions. In particular, if i is
       // not the first element after a division, we may assume to have
@@ -284,6 +318,11 @@ BoundaryComputer::bt_l(int i)
       // Sure l[i] cannot exceed G-sum; moreover we will have to put
       // at least other K-2 edges to connect the graph.
       int end = graph.G - graph.sum - (graph.K - 1);
+      if (is_p1)
+        {
+          //          int diff_wasted = -max(2-graph.m[i], 0);
+          //          end = min(end, graph.G-graph.sum - graph.p1 + (diff_wasted-graph.K+graph.m_p1+1)/2);
+        }
       for (int n = start; n <= end; n++)
         {
           // We do the changes induced by l[i] = n.
@@ -294,10 +333,12 @@ BoundaryComputer::bt_l(int i)
           graph.edges[i] += 2*n;
           graph.total_edges += n;
           graph.sum += n;
+          //          if (is_p1) graph.m_p1 += min(graph.m[i]+2*n, 2) - min(graph.m[i], 2);
 
           bt_l(i+1);
 
           // We go back to the previous situation.
+          //          if (is_p1) graph.m_p1 -= min(graph.m[i]+2*n, 2) - min(graph.m[i], 2);
           graph.sum -= n;
           graph.total_edges -= n;
           graph.edges[i] -= 2*n;
@@ -308,6 +349,7 @@ BoundaryComputer::bt_l(int i)
        // to the rest of the upper triangle of the matrix, row by row,
        // from left to right.
     {
+      // bla_gnl[make_pair(vector<int>(graph.g,graph.g+graph.K), make_pair(vector<int>(graph.m,graph.m+graph.K), vector<int>(graph.l,graph.l+graph.K)))] = 0;
       memset(graph.gDegrees, 0, sizeof(uchar)*(graph.G+2));
       bt_a(0, 1);
     }
@@ -417,6 +459,9 @@ BoundaryComputer::bt_a(int i, int j)
 void
 BoundaryComputer::add_to_store(void)
 {
+  // bla_g[vector<int>(graph.g,graph.g+graph.K)]++;
+  // bla_gn[make_pair(vector<int>(graph.g,graph.g+graph.K), vector<int>(graph.m,graph.m+graph.K))]++;
+  // bla_gnl[make_pair(vector<int>(graph.g,graph.g+graph.K), make_pair(vector<int>(graph.m,graph.m+graph.K), vector<int>(graph.l,graph.l+graph.K)))]++;
   Graph *ng = new Graph(graph);
   store[ng->total_edges].push_back(ng);
   GraphClass bucket(graph);
