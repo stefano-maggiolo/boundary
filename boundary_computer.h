@@ -74,10 +74,12 @@ class BoundaryComputer: public Computer
   vector< int > statisticsTime; // in ms, by K
   vector< int > statisticsMemory; // in kB, by K
 
+#ifdef BLADEBUG
   // Statistics part 2
   map< pair< vector< int >, pair< vector < int >, vector< int > > >, int > bla_gnl;
   map< pair< vector< int >, vector < int > >, int > bla_gn;
   map< vector< int >, int > bla_g;
+#endif
 };
 
 #endif

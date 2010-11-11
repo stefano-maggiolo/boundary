@@ -121,9 +121,11 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
   // marked points.
   for (int K = 2; K <= 2*graph.G-2+graph.M; K++)
     {
-      // bla_g.clear();
-      // bla_gn.clear();
-      // bla_gnl.clear();
+#ifdef BLADEBUG
+      bla_g.clear();
+      bla_gn.clear();
+      bla_gnl.clear();
+#endif
       if (computeOnlyCodim != -1 && K > computeOnlyCodim + 1) break;
 
       if (stats == Full) fprintf(stderr, "K = %2d... ", K);
@@ -182,16 +184,21 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
         }
       store.clear();
       divstore.clear();
-      // for (map< pair< vector< int >, vector< int > >, int >::iterator s = bla_gn.begin(); s != bla_gn.end(); ++s)
-      //   {
-      //     fprintf(stderr, "%6d     (", s->second);
-      //     for (int i = 0; i < K-1; i++)
-      //       fprintf(stderr, "%d,", s->first.first[i]);
-      //     fprintf(stderr, "%d) (", s->first.first[K-1]);
-      //     for (int i = 0; i < K-1; i++)
-      //       fprintf(stderr, "%d,", s->first.second[i]);
-      //     fprintf(stderr, "%d)\n", s->first.second[K-1]);
-      //   }
+#ifdef BLADEBUG
+      for (map< pair< vector< int >, pair< vector< int >, vector< int > > >, int >::iterator s = bla_gnl.begin(); s != bla_gnl.end(); ++s)
+        {
+          fprintf(stderr, "%6d     (", s->second);
+          for (int i = 0; i < K-1; i++)
+            fprintf(stderr, "%d,", s->first.first[i]);
+          fprintf(stderr, "%d) (", s->first.first[K-1]);
+          for (int i = 0; i < K-1; i++)
+            fprintf(stderr, "%d,", s->first.second.first[i]);
+          fprintf(stderr, "%d) (", s->first.second.first[K-1]);
+          for (int i = 0; i < K-1; i++)
+            fprintf(stderr, "%d,", s->first.second.second[i]);
+          fprintf(stderr, "%d)\n", s->first.second.second[K-1]);
+        }
+#endif
     }
 
   printer.EndPrint();
@@ -216,20 +223,45 @@ BoundaryComputer::Compute(GraphPrinter &printer)
 void
 BoundaryComputer::bt_g(int i)
 {
-  if (i < graph.K) // We have to assign g[i].
+  if (i < graph.K) // We have to assign g_i.
     {
-      // We impose the vector g to be non-decreasing, to avoid
-      // generating isomorphic graphs.
-      int start = 0;
-      if (i > 0) start = graph.g[i-1];
+      // We impose the vector g to be non-decreasing.
+      int start = graph.divisions[i]? 0: graph.g[i-1];
+      // Here, we have:
+      //   $sum = \sum_{j<i} g_j - K+1$,
+      //   $G-sum = g_i + \sum_{j>i} g_j + |E|$,
+      //   $|E| >= K-1$,
+      //   $\sum_{j>=i} g_j >= (K-i) g_i$, hence:
+      //   $(K-i)g_i <= G - sum - (K-1)$.
+      int end = (graph.G-graph.sum - (graph.K - 1)) / (graph.K-i);
+      // Let introduce a convention: whenever we want to use a
+      // condition of the form "we need at least ... to stabilize
+      // ...", we mean:
 
-      // TODO: update this comment
-      // Since we want G = sum + SUM_{j>=i}g[j] + edges, we have
-      // 2edges+marked>=3*p1 (to stabilize the genus 0 curves), edges>=K-1
-      // (to connect the graph) and g[j]>=g[i], then we get the
-      // following.
-      int end = graph.G - graph.sum - max(graph.K-1, graph.p1+(graph.K-graph.M+1)/2);
-      end /=  (graph.K-i);
+      // a. we split the edges in K-1 connection edges and the
+      //    remaining. Connection edges contribute to one
+      //    stabilization for every vertex, plus K-2 stabilization
+      //    that we can choose how to distribute; the remaining
+      //    $|E|-(K-1)$ edges give us 2 stabilization each, hence the
+      //    total number of stabilizations are $2(|E|-(K-1)) + K-2 =
+      //    2|E|-K$.
+
+      // b. hence, before beginning to assign non-loop edges, we
+      //    consider a genus 0 curve stabilized when it has 2
+      //    stabilization, because we know for certain that one more
+      //    will arrive to connect it to the rest of the graph.
+
+      // Consider: p1 genus 0 curves to stabilize, before deciding g_i.
+      // Max n. of edges: (G-sum) - (K-i)g_i;
+      // Max n. of stab. h/edges from edges: 2((G-sum) - (K-i)g_i) - K.
+      // Max n. of stab. h/edges from marked pts: M
+      // H/edges needed to stabilize: 2p1
+      // => 2p1 <= 2((G-sum) - (K-i)g_i) - K + M
+      // => 2(K-i)g_i <= 2(G-sum) - K + M - 2p1
+      end = min(end,
+                (2*(graph.G - graph.sum) -
+                 graph.K + graph.M -
+                 2*graph.p1) / (2*(graph.K-i)));
       for (int n = start; n <= end; n++)
         {
           // We do the changes induced by g[i] = n.
@@ -249,9 +281,13 @@ BoundaryComputer::bt_g(int i)
           graph.divisions[i] = false;
         }
     }
-  else // If we decided all the genera, we go to assign values to the marked points
+  else
     {
-      // bla_g[vector<int>(graph.g,graph.g+graph.K)] = 0;
+      // If we decided all the genera, we go to assign values to the
+      // marked points.
+#ifdef BLADEBUG
+      bla_g[vector<int>(graph.g,graph.g+graph.K)] = 0;
+#endif
       bt_m(0);
     }
 }
@@ -263,18 +299,50 @@ BoundaryComputer::bt_m(int i)
 	{
       bool is_p1 = i < graph.p1;
       // We impose the vector m to be non-decreasing for i's such that
-      // the genus is equal, to avoid generating isomorphic graphs.
+      // the genus is equal.
       int start = graph.divisions[i]? 0: graph.m[i-1];
       // For m, start may change from the one we get with divisions;
-      // but we have to use that one to compute further divisions,
-      // hence we save it in startdiv.
-      int startdiv = start;
-      // m[i] is always smaller or equal than M-msum.
+      // but we have to use the latter to compute further divisions,
+      // hence we save it in start_div.
+      int start_div = start;
+      // m_i is always smaller or equal than M-msum.
       int end = graph.M-graph.msum;
       if (is_p1)
         {
-          start = max(start, -graph.m_p1+graph.K-2*graph.G+2*graph.sum+2*i+2);
-          end /= graph.p1 - i;
+          // Up to now, end is the remaining number of marked pts. In
+          // the range [0,p1-1], m is increasing, hence we can't waste
+          // all marked pts on i.
+          end /= graph.p1-i;
+
+          // Here, $sum = \sum g_j - K + 1$, hence $G-sum =
+          // |E|$. Therefore we have available $2(G-sum - (K-1)) + K-2
+          // = 2(G-sum) - K$ stabilizing half edges.
+
+          // Consider the first i+1 genus 0 curves. We have m_p1 +
+          // min(m_i, 2) stabilizing half edges on them; the remaining
+          // stabilizations needed are 2(i+1) - m_p1 - min(m_i,2), so
+          // this amount has to be smaller or equal to the half edges
+          // we have: $2(G-sum) - K$; therefore we obtain $min(m,2) >=
+          // -(2(G-sum) - K) + 2(i+1) - m_p1$. If the RHS is greater
+          // or equal than 2, the inequality cannot be satisfied.
+          int tmp = -(2*(graph.G-graph.sum)-graph.K) + 2*(i+1)-graph.m_p1;
+          if (tmp > 2)
+            return;
+          start = max(start, tmp);
+
+          // Consider: the p1 genus 0 curves, after deciding m_i.
+          // Max n. of edges: G-sum
+          // Max n. of stab. h/edges from edges: 2(G-sum) - K
+          // Max n. of stab. h/edges from marked points: M-msum-m
+          // H/edges needed to stabilize: 2p1-m_p1-min(2,m_i)
+          // => 2p1-m_p1-min(2,m_i) <= 2((G-sum)-K + M-msum-m
+          // => m-min(2,m_i) <= 2(G-sum)-K + M-msum - (2p1-m_p1)$.
+          int lim_to_wasted = 2*(graph.G-graph.sum)-graph.K +
+            graph.M-graph.msum - (2*graph.p1-graph.m_p1);
+          if (lim_to_wasted < 0)
+            return;
+          else
+            end = min(end, 2+lim_to_wasted);
         }
       for (int n = start; n <= end; n++)
 		{
@@ -282,7 +350,7 @@ BoundaryComputer::bt_m(int i)
 
 		  graph.m[i] = n;
 		  bool tmp = graph.divisions[i];
-		  if (n > startdiv) graph.divisions[i] = true;
+		  if (n > start_div) graph.divisions[i] = true;
 		  graph.msum += n;
           if (is_p1) graph.m_p1 += min(n, 2);
 
@@ -294,10 +362,13 @@ BoundaryComputer::bt_m(int i)
 		}
 
 	}
-  else  // If we decided all the marked points, we go to assign values
-        // to the diagonal of the adjacency matrix.
+  else
     {
-      // bla_gn[make_pair(vector<int>(graph.g,graph.g+graph.K), vector<int>(graph.m,graph.m+graph.K))] = 0;
+      // If we decided all the marked points, we go to assign values
+      // to the diagonal of the adjacency matrix.
+#ifdef BLADEBUG
+      bla_gn[make_pair(vector<int>(graph.g,graph.g+graph.K), vector<int>(graph.m,graph.m+graph.K))] = 0;
+#endif
       bt_l(0);
     }
 }
@@ -314,14 +385,64 @@ BoundaryComputer::bt_l(int i)
       // permuted the components in such a way that they are
       // non-decreasing.
       int start = graph.divisions[i]? 0: graph.l[i-1];
+      // See the comment in bt_m.
+      int start_div = start;
 
-      // Sure l[i] cannot exceed G-sum; moreover we will have to put
-      // at least other K-2 edges to connect the graph.
-      int end = graph.G - graph.sum - (graph.K - 1);
+      // Here, $sum = \sum g_j + \sum_{j<i} l_j - K + 1$, hence $G-sum
+      // = l_i + \sum_{j>i} l_j + |E~|$, where $E~$ is the set of
+      // non-loop edges. Note that connecting edges are contained in
+      // E~, hence $|E~| >= K-1$. Therefore, $l_i <= G-sum - (K-1)
+
+      // After deciding l_i, we have $m_p1 + min(2,m_i+2l_i)$
+      // stabilizing half edges, $G-sum-l_i$ edges to place.
+      int end = graph.G - graph.sum - (graph.K-1);
+
+      // Consider the genus 0 curve with the minimum number of
+      // stabilizing half edges amongst the ones with index less than
+      // i, after deciding l_i.
+      // Max n. of edges: G-sum-l_i
+      // Max n. of stab. h/edges from edges: G-sum-l_i-1 (since we can't use loops anymore)
+      // Max n. of stab. h/edges from marked points: 0
+      // H/edges needed to stabilize: 2-min_m_p1_i
+      // => 2-min_m_p1_i <= G-sum-l_i-1
+      // => l_i <= G-sum - 3 + min_m_p1_i
+      end = min(end,
+                (graph.G-graph.sum) - 3 + graph.min_m_p1_i);
+
+      // Stabilization half edges gained if l_i > 0
+      int stab_gained = max(2-graph.m[i],0);
+      if (!is_p1) stab_gained = 0;
+
+      // Consider the p1 genus 0 curves, after deciding l_i
+      // Max n. of edges: G-sum-l_i
+      // Max n. of stab. h/edges from edges: 2(G-sum-l_i)-K
+      // Max n. of stab. h/edges from marked points: 0
+      // H/edges needed to stabilize: 2p1-m_p1-stab_gained
+      // => 2p1-m_p1-stab_gained <= 2(G-sum-l_i)-K
+      // => 2l_i <= 2(G-sum) - K - 2p1 + m_p1 + stab_gained
+      end = min(end,
+                (2*(graph.G - graph.sum) - graph.K - 2*graph.p1 + graph.m_p1 + stab_gained)/2);
+
       if (is_p1)
         {
-          //          int diff_wasted = -max(2-graph.m[i], 0);
-          //          end = min(end, graph.G-graph.sum - graph.p1 + (diff_wasted-graph.K+graph.m_p1+1)/2);
+          // We have $2-min(2,m_i+2l_i)$ half edges to add to curve
+          // i. Note that the $G-sum-l_i$ edges to place cannot give 2
+          // stabilizing points anymore to the i curve because we
+          // already decided its loops. Hence, the maximum number of
+          // stabilizing half edges for i is $G-sum-l_i-(K-1) + K-2 =
+          // G-sum-l_i-1$. Therefore, we need to ensure that $m + 2l_i
+          // + G-sum-l_i-1 >= 2$.
+          start = max(start, 3 - (graph.G - graph.sum) - graph.m[i]);
+
+          // Consider the first i genus 0 curves, after deciding l_i
+          // Max n. of edges: G-sum-l_i
+          // Max n. of stab. h/edges from edges: 2(G-sum-l_i)-K
+          // Max n. of stab. h/edges from marked points: 0
+          // H/edges needed to stabilize: 2i - m_p1_i
+          // => 2i - m_p1_i <= 2(G-sum-l_i)-K
+          // => 2l_i <= 2(G-sum) - K - 2i + m_p1_i
+          end = min(end,
+                    (2*(graph.G - graph.sum) - graph.K - 2*i + graph.m_p1_i)/2);
         }
       for (int n = start; n <= end; n++)
         {
@@ -329,16 +450,27 @@ BoundaryComputer::bt_l(int i)
           graph.l[i] = n;
           graph.a[i][i] = n;
           bool tmp = graph.divisions[i];
-          if (n > start) graph.divisions[i] = true;
+          if (n > start_div) graph.divisions[i] = true;
           graph.edges[i] += 2*n;
           graph.total_edges += n;
           graph.sum += n;
-          //          if (is_p1) graph.m_p1 += min(graph.m[i]+2*n, 2) - min(graph.m[i], 2);
-
+          int tmp_min_m_p1_i;
+          if (is_p1)
+            {
+              tmp_min_m_p1_i = graph.min_m_p1_i;
+              graph.m_p1 += min(graph.m[i]+2*n, 2) - min((int)graph.m[i], 2);
+              graph.m_p1_i += min(graph.m[i]+2*n, 2);
+              graph.min_m_p1_i = min((int)graph.min_m_p1_i, min(graph.m[i]+2*n, 2));
+            }
           bt_l(i+1);
 
           // We go back to the previous situation.
-          //          if (is_p1) graph.m_p1 -= min(graph.m[i]+2*n, 2) - min(graph.m[i], 2);
+          if (is_p1)
+            {
+              graph.min_m_p1_i = tmp_min_m_p1_i;
+              graph.m_p1_i -= min(graph.m[i]+2*n, 2);
+              graph.m_p1 -= min(graph.m[i]+2*n, 2) - min((int)graph.m[i], 2);
+            }
           graph.sum -= n;
           graph.total_edges -= n;
           graph.edges[i] -= 2*n;
@@ -349,7 +481,9 @@ BoundaryComputer::bt_l(int i)
        // to the rest of the upper triangle of the matrix, row by row,
        // from left to right.
     {
-      // bla_gnl[make_pair(vector<int>(graph.g,graph.g+graph.K), make_pair(vector<int>(graph.m,graph.m+graph.K), vector<int>(graph.l,graph.l+graph.K)))] = 0;
+#ifdef BLADEBUG
+      bla_gnl[make_pair(vector<int>(graph.g,graph.g+graph.K), make_pair(vector<int>(graph.m,graph.m+graph.K), vector<int>(graph.l,graph.l+graph.K)))] = 0;
+#endif
       memset(graph.gDegrees, 0, sizeof(uchar)*(graph.G+2));
       bt_a(0, 1);
     }
@@ -451,7 +585,6 @@ BoundaryComputer::bt_a(int i, int j)
           graph.nautyK = -1;
 
           if (correct()) add_to_store();
-
         }
     }
 }
@@ -459,9 +592,11 @@ BoundaryComputer::bt_a(int i, int j)
 void
 BoundaryComputer::add_to_store(void)
 {
-  // bla_g[vector<int>(graph.g,graph.g+graph.K)]++;
-  // bla_gn[make_pair(vector<int>(graph.g,graph.g+graph.K), vector<int>(graph.m,graph.m+graph.K))]++;
-  // bla_gnl[make_pair(vector<int>(graph.g,graph.g+graph.K), make_pair(vector<int>(graph.m,graph.m+graph.K), vector<int>(graph.l,graph.l+graph.K)))]++;
+#ifdef BLADEBUG
+  bla_g[vector<int>(graph.g,graph.g+graph.K)]++;
+  bla_gn[make_pair(vector<int>(graph.g,graph.g+graph.K), vector<int>(graph.m,graph.m+graph.K))]++;
+  bla_gnl[make_pair(vector<int>(graph.g,graph.g+graph.K), make_pair(vector<int>(graph.m,graph.m+graph.K), vector<int>(graph.l,graph.l+graph.K)))]++;
+#endif
   Graph *ng = new Graph(graph);
   store[ng->total_edges].push_back(ng);
   GraphClass bucket(graph);
@@ -499,7 +634,7 @@ BoundaryComputer::visit(int i)
   v[i] = true;
   int s = 1;
   for (int n = 0; n < graph.K; n++)
-    if (graph.a[i][n] != 0 && v[n] == false)
+    if (graph.a[i][n] != 0 && !v[n])
       s += visit(n);
   return s;
 }
