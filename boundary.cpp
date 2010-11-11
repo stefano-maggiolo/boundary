@@ -147,11 +147,6 @@ ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printe
     }
   if (g == -1)
     QuitWithUsage(argv[0]);
-  if (2*g-3+n < 0)
-    {
-      fprintf(stderr, "Stability condition not verified! Try with 2g+n-3 non-negative!\n");
-      exit(1);
-    }
   return 0;
 }
 

@@ -29,6 +29,14 @@ BoundaryComputer::GetAllResultsByCodimension(void)
 void
 BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int computeOnlyCodim)
 {
+  if (2*G-3+M < 0)
+    {
+      computed = true;
+      if (stats== Full) Statistics(stderr);
+      else if (stats== Terse) TerseStatistics(stderr);
+      return;
+    }
+
   statistics.assign(3*G-3+M+1, 0);
   statisticsTime.assign(2*G-2+M+1, 0);
   statisticsMemory.assign(2*G-2+M+1, 0);
