@@ -66,11 +66,11 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
   for (int n = 0; n <= graph.G; n++)
     {
       tried[1]++;
-      graph.a[1][1] = graph.G-n;
-      graph.g[1] = n;
-      graph.m[1] = graph.M;
-      graph.l[1] = graph.G-n;
-      graph.edges[1] =  2*(graph.G-n);
+      graph.a[0][0] = graph.G-n;
+      graph.g[0] = n;
+      graph.m[0] = graph.M;
+      graph.l[0] = graph.G-n;
+      graph.edges[0] =  2*(graph.G-n);
       graph.total_edges = graph.G-n;
       if (computeOnlyCodim == -1 || computeOnlyCodim == graph.total_edges)
         {
