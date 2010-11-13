@@ -133,42 +133,6 @@ Graph::PrintLaTeX(FILE* f) const
   fprintf(f, "    \\end{tikzpicture}\n");
 }
 
-void
-Graph::PrintPretty(FILE* f, int d, int r, const bool divis[],
-                   int start, int end) const
-{
-  fprintf(f, "Diagonale = %d, Riga = %d\n", d, r);
-  fprintf(f, "Prossimo numero tra %d e %d.\n", start, end);
-  for (int j = 0; j < K; j++)
-    fprintf(f, "  %d  ", g[j]);
-  fprintf(f, "\n");
-
-  for (int i = 0; i < K; i++)
-    {
-      if (divis[i])
-        for (int j = 0; j < K; j++)
-          if (divis[j])
-            fprintf(f, "+-");
-          else
-            fprintf(f, "--");
-      else
-        for (int j = 0; j < K; j++)
-          if (divis[j])
-            fprintf(f, "| ");
-          else
-            fprintf(f, "  ");
-      fprintf(f, "\n");
-
-      for (int j = 0; j < K; j++)
-        if (divis[j])
-          fprintf(f, "|%d", a[i][j]);
-        else
-          fprintf(f, " %d", a[i][j]);
-      fprintf(f, "\n");
-    }
-  fprintf(f, "\n");
-}
-
 Graph::Graph(int g, int n, int k)
   : G(g),
     M(n),
@@ -185,11 +149,10 @@ Graph::Graph(const Graph& g2)
 
   total_edges = g2.total_edges;
   p1 = g2.p1;
-  m_p1 = g2.m_p1;
-  m_p1_3 = g2.m_p1_3;
-  memmove(m_p1_single, g2.m_p1_single, sizeof(uchar)*K);
-  m_p1_i = g2.m_p1_i;
-  min_m_p1_i = g2.min_m_p1_i;
+  stab_he_2 = g2.stab_he_2;
+  stab_he_3 = g2.stab_he_3;
+  memmove(he, g2.he, sizeof(uchar)*K);
+  min_he_2 = g2.min_he_2;
   sum = g2.sum;
   msum = g2.msum;
   connections = g2.connections;
@@ -203,7 +166,8 @@ Graph::Graph(const Graph& g2)
   for (int i = 0; i < K; i++)
     memmove(a[i], g2.a[i], sizeof(uchar)*K);
   memmove(gDegrees, g2.gDegrees, sizeof(uchar)*(G+2));
-  memmove(divisions, g2.divisions, sizeof(bool)*(K+1));
+  divisions = g2.divisions;
+  //  memmove(divisions, g2.divisions, sizeof(bool)*(K+1));
   nautyK = g2.nautyK;
   nautyM = g2.nautyM;
   memmove(nautyGraph, g2.nautyGraph, MAXN*MAXM*sizeof(graph));
@@ -271,15 +235,15 @@ Graph::Clear(uchar newK)
   msum = 0;
   // Nor genus 0 curves.
   p1 = 0;
-  m_p1 = 0;
-  m_p1_3 = 0;
-  memset(m_p1_single, 0, sizeof(uchar)*K);
-  m_p1_i = 0;
-  min_m_p1_i = 2;
+  stab_he_2 = 0;
+  stab_he_3 = 0;
+  memset(he, 0, sizeof(uchar)*K);
+  min_he_2 = 2;
 
   // We clear divisions, but divisions[0] exists by definition.
-  memset(divisions, 0, sizeof(bool)*(K+1));
-  divisions[0] = true;
+  divisions = 1;
+  //  memset(divisions, 0, sizeof(bool)*(K+1));
+  //  divisions[0] = true;
 }
 
 bool

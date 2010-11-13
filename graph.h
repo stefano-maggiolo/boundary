@@ -73,11 +73,13 @@ class Graph
   // How many genus 0 components are there
   uchar p1;
   // Stabilizing (m_C <= 2) marked points on genus 0 components
-  uchar m_p1;
-  uchar m_p1_3;
-  uchar m_p1_single[MAX_K];
-  uchar m_p1_i;
-  uchar min_m_p1_i;
+  uchar stab_he_2;
+  // Stabilizing (m_C <= 3) marked points on genus 0 components
+  uchar stab_he_3;
+  // Total # of half edges on the i-th genus 0 component
+  uchar he[MAX_K];
+  // Min # of half edges on one of the first i components
+  uchar min_he_2;
   // Total number of edges
   uchar total_edges;
   // If it is rational tail
@@ -93,7 +95,7 @@ class Graph
   // horizontal and vertical divisions since the adjacency matrix can be
   // permuted only with permutation induces by S_K (i.e., by a
   // permutation of {1,... , K}, not by a generic permutation matrix.
-  bool divisions[MAX_K+1];
+  unsigned int divisions;//[MAX_K+1];
 
   int nautyK, nautyM;
   graph nautyGraph[MAXN*MAXM];
@@ -102,8 +104,6 @@ class Graph
   void PrintBinary(FILE* f) const;
   void PrintLaTeX(FILE* f = stdout) const;
   void PrintMatrix(FILE* f = stderr) const;
-  void PrintPretty(FILE* f, int d, int r, const  bool divis[],
-                   int start, int end) const;
 
   void PrintMatrixSimple(FILE* f, graph* g) const;
   void ComputeDreadnaut(void);
