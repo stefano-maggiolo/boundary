@@ -186,6 +186,8 @@ Graph::Graph(const Graph& g2)
   total_edges = g2.total_edges;
   p1 = g2.p1;
   m_p1 = g2.m_p1;
+  m_p1_3 = g2.m_p1_3;
+  memmove(m_p1_single, g2.m_p1_single, sizeof(uchar)*K);
   m_p1_i = g2.m_p1_i;
   min_m_p1_i = g2.min_m_p1_i;
   sum = g2.sum;
@@ -270,6 +272,8 @@ Graph::Clear(uchar newK)
   // Nor genus 0 curves.
   p1 = 0;
   m_p1 = 0;
+  m_p1_3 = 0;
+  memset(m_p1_single, 0, sizeof(uchar)*K);
   m_p1_i = 0;
   min_m_p1_i = 2;
 

@@ -360,11 +360,21 @@ BoundaryComputer::bt_m(int i)
 		  bool tmp = graph.divisions[i];
 		  if (n > start_div) graph.divisions[i] = true;
 		  graph.msum += n;
-          if (is_p1) graph.m_p1 += min(n, 2);
+          if (is_p1)
+            {
+              graph.m_p1 += min(n, 2);
+              graph.m_p1_3 += min(n, 3);
+            }
+          graph.m_p1_single[i] += n;
 
 		  bt_m(i+1);
 
-          if (is_p1) graph.m_p1 -= min(n, 2);
+          graph.m_p1_single[i] -= n;
+          if (is_p1)
+            {
+              graph.m_p1 -= min(n, 2);
+              graph.m_p1_3 -= min(n, 3);
+            }
 		  graph.msum -= n;
 		  graph.divisions[i] = tmp;
 		}
@@ -467,16 +477,21 @@ BoundaryComputer::bt_l(int i)
             {
               tmp_min_m_p1_i = graph.min_m_p1_i;
               graph.m_p1 += min(graph.m[i]+2*n, 2) - min((int)graph.m[i], 2);
+              graph.m_p1_3 += min(graph.m[i]+2*n, 3) - min((int)graph.m[i], 3);
               graph.m_p1_i += min(graph.m[i]+2*n, 2);
               graph.min_m_p1_i = min((int)graph.min_m_p1_i, min(graph.m[i]+2*n, 2));
             }
+          graph.m_p1_single[i] += 2*n;
+
           bt_l(i+1);
 
           // We go back to the previous situation.
+          graph.m_p1_single[i] -= 2*n;
           if (is_p1)
             {
               graph.min_m_p1_i = tmp_min_m_p1_i;
               graph.m_p1_i -= min(graph.m[i]+2*n, 2);
+              graph.m_p1_3 -= min(graph.m[i]+2*n, 3) - min((int)graph.m[i], 3);
               graph.m_p1 -= min(graph.m[i]+2*n, 2) - min((int)graph.m[i], 2);
             }
           graph.sum -= n;
@@ -509,6 +524,8 @@ BoundaryComputer::bt_a(int i, int j)
 
   if (i < graph.K-1) // We have to assign a[i][j].
     {
+      bool is_i_p1 = i < graph.p1;
+      bool is_j_p1 = j < graph.p1;
 
       // If i is not the first element in its non-divisions range,
       // then we can assume it is not less then the element in the
@@ -525,6 +542,16 @@ BoundaryComputer::bt_a(int i, int j)
       // up to now, sure we will have to put at least other K-2-c
       // edges to connect the graph.
       int end = graph.G - graph.sum - max(0, graph.K-2-graph.connections);
+
+      // Consider the first p1 genus 0 curves, after deciding a_ij
+      // Max n. of edges: G-sum-a_ij
+      // Max n. of stab. h/edges from edges: 2(G-sum-a_ij)
+      // Max n. of stab. h/edges from marked points: 0
+      // H/edges needed to stabilize: 3p1 - m_p1_3 - min()
+      // => 3p1 - m_p1_3 <= G-sum-a_ij
+      // => a_ij <= G-sum - 2p1 + m_p1
+      int max_stab_gained = max(0, 3-graph.m_p1_single[i]) + max(0, 3-graph.m_p1_single[j]);
+      end = min(end, (2*(graph.G-graph.sum) - 3*graph.p1 + graph.m_p1_3 + max_stab_gained)/2);
       for (int n = start; n <= end; n++)
         {
           // We check the following, to ensure that the sum = G and
@@ -558,7 +585,20 @@ BoundaryComputer::bt_a(int i, int j)
           graph.a[i][j] = n;
           graph.a[j][i] = n;
           bool tmpi = graph.divisions[i], tmpj = graph.divisions[j];
-          if (n > 0) graph.connections++;
+          if (n > 0)
+            {
+              graph.connections++;
+              if (is_i_p1)
+                {
+                  graph.m_p1_3 -= min((int)graph.m_p1_single[i],3);
+                  graph.m_p1_3 += min((int)graph.m_p1_single[i]+n,3);
+                }
+              if (is_j_p1)
+                {
+                  graph.m_p1_3 -= min((int)graph.m_p1_single[j],3);
+                  graph.m_p1_3 += min((int)graph.m_p1_single[j]+n,3);
+                }
+            }
           graph.edges[i] += n;
           graph.edges[j] += n;
           graph.total_edges += n;
@@ -566,10 +606,14 @@ BoundaryComputer::bt_a(int i, int j)
           if (n > start_j && j > i+1) graph.divisions[j] = true;
           graph.sum += n;
           graph.gDegrees[n]++;
+          graph.m_p1_single[i] += n;
+          graph.m_p1_single[j] += n;
 
           bt_a(i, j+1);
 
           // We go back to the previous situation.
+          graph.m_p1_single[i] -= n;
+          graph.m_p1_single[j] -= n;
           graph.gDegrees[n]--;
           graph.sum -= n;
           graph.divisions[i] = tmpi;
@@ -577,7 +621,20 @@ BoundaryComputer::bt_a(int i, int j)
           graph.edges[i] -= n;
           graph.edges[j] -= n;
           graph.total_edges -= n;
-          if (n > 0) graph.connections--;
+          if (n > 0)
+            {
+              graph.connections--;
+              if (is_i_p1)
+                {
+                  graph.m_p1_3 += min((int)graph.m_p1_single[i],3);
+                  graph.m_p1_3 -= min((int)graph.m_p1_single[i]+n,3);
+                }
+              if (is_j_p1)
+                {
+                  graph.m_p1_3 += min((int)graph.m_p1_single[j],3);
+                  graph.m_p1_3 -= min((int)graph.m_p1_single[j]+n,3);
+                }
+            }
         }
     }
   else // If we decided all the matrix, we check if the graph is

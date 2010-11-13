@@ -74,6 +74,8 @@ class Graph
   uchar p1;
   // Stabilizing (m_C <= 2) marked points on genus 0 components
   uchar m_p1;
+  uchar m_p1_3;
+  uchar m_p1_single[MAX_K];
   uchar m_p1_i;
   uchar min_m_p1_i;
   // Total number of edges
