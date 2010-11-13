@@ -68,8 +68,6 @@ class Graph
   uchar msum;
   // How many connections already placed in the graph.
   uchar connections;
-  // How many edges connecting the vertices.
-  uchar edges[MAX_K];
   // How many genus 0 components are there
   uchar p1;
   // Stabilizing (m_C <= 2) marked points on genus 0 components

@@ -70,7 +70,6 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
       graph.g[0] = n;
       graph.m[0] = graph.M;
       graph.l[0] = graph.G-n;
-      graph.edges[0] =  2*(graph.G-n);
       graph.total_edges = graph.G-n;
       if (computeOnlyCodim == -1 || computeOnlyCodim == graph.total_edges)
         {
@@ -274,8 +273,10 @@ BoundaryComputer::bt_g(int i)
         {
           // We do the changes induced by g[i] = n.
           graph.g[i] = n;
-          if (n == 0) graph.p1++;
-          graph.sum += n;
+          if (n == 0)
+            graph.p1++;
+          else
+            graph.sum += n;
           // If we are increasing the genus with respect to the
           // previous one, we cannote exchange anymore components < i
           // with components >= i, so we put a division.
@@ -284,8 +285,10 @@ BoundaryComputer::bt_g(int i)
           bt_g(i+1);
 
           // We go back to the previous situation
-          graph.sum -= n;
-          if (n == 0) graph.p1--;
+          if (n == 0)
+            graph.p1--;
+          else
+            graph.sum -= n;
           graph.divisions &= ~(1<<i);
         }
     }
@@ -364,14 +367,14 @@ BoundaryComputer::bt_m(int i)
           if (is_p1)
             {
               graph.stab_he_2 += min(n, 2);
-              graph.he[i] += n;
             }
+          graph.he[i] += n;
 
 		  bt_m(i+1);
 
+          graph.he[i] -= n;
           if (is_p1)
             {
-              graph.he[i] -= n;
               graph.stab_he_2 -= min(n, 2);
             }
 		  graph.msum -= n;
@@ -462,15 +465,13 @@ BoundaryComputer::bt_l(int i)
             {
               tmp = graph.divisions;
               if (n > start_div) graph.divisions |= 1 << i;
-              graph.edges[i] += 2*n;
-              graph.total_edges += n;
               graph.sum += n;
               if (is_p1)
                 {
                   graph.stab_he_2 -= min((int)graph.he[i],2);
                   graph.stab_he_2 += min((int)graph.he[i]+2*n,2);
-                  graph.he[i] += 2*n;
                 }
+              graph.he[i] += 2*n;
             }
           if (is_p1)
             {
@@ -487,15 +488,13 @@ BoundaryComputer::bt_l(int i)
             }
           if (n > 0)
             {
+              graph.he[i] -= 2*n;
               if (is_p1)
                 {
-                  graph.he[i] -= 2*n;
                   graph.stab_he_2 += min((int)graph.he[i],2);
                   graph.stab_he_2 -= min((int)graph.he[i]+2*n,2);
                 }
               graph.sum -= n;
-              graph.total_edges -= n;
-              graph.edges[i] -= 2*n;
               graph.divisions = tmp;
             }
         }
@@ -563,24 +562,29 @@ BoundaryComputer::bt_a(int i, int j)
             {
               // If this is the last chance to add edge to a genus 0
               // curve, we add enough to stabilize it.
-              if (i < graph.p1 && graph.m[i]+graph.edges[i]+n < 3) continue;
+              if (is_i_p1 && graph.he[i]+n < 3)
+                continue;
               // If we're finishing...
               if (i == graph.K-2)
                 {
                   // For i = K-1, the last chance is actually at i = K-2.
-                  if (graph.p1 == graph.K && graph.m[graph.K-1]+graph.edges[graph.K-1]+n < 3) continue;
+                  if (graph.p1 == graph.K && graph.he[graph.K-1]+n < 3)
+                    continue;
                   // The grand total has to be G.
-                  else if (graph.sum + n != graph.G) continue;
+                  else if (graph.sum + n != graph.G)
+                    continue;
                 }
               // If we don't connect the curve now...
               if (n == 0)
                 {
                   // A curve has to be connected to at least one
                   // different curve.
-                  if (graph.edges[i] == 2*graph.l[i]) continue;
+                  if (graph.he[i] == graph.m[i]+2*graph.l[i])
+                    continue;
                   // For i = K-1, last chance to connect the last
                   // curve.
-                  else if (i == graph.K-2 && graph.edges[graph.K-1] == 2*graph.l[graph.K-1]) continue;
+                  else if (i == graph.K-2 && graph.he[graph.K-1] == graph.m[graph.K-1] + 2*graph.l[graph.K-1])
+                    continue;
                 }
               // All right!
             }
@@ -601,9 +605,6 @@ BoundaryComputer::bt_a(int i, int j)
                   graph.stab_he_3 -= min((int)graph.he[j],3);
                   graph.stab_he_3 += min((int)graph.he[j]+n,3);
                 }
-              graph.edges[i] += n;
-              graph.edges[j] += n;
-              graph.total_edges += n;
               graph.sum += n;
               graph.he[i] += n;
               graph.he[j] += n;
@@ -623,9 +624,6 @@ BoundaryComputer::bt_a(int i, int j)
               graph.he[i] -= n;
               graph.he[j] -= n;
               graph.sum -= n;
-              graph.edges[i] -= n;
-              graph.edges[j] -= n;
-              graph.total_edges -= n;
               graph.connections--;
               if (is_i_p1)
                 {
@@ -643,6 +641,10 @@ BoundaryComputer::bt_a(int i, int j)
   else // If we decided all the matrix, we check if the graph is
        // acceptable. In case, we print it.
     {
+      graph.total_edges = -graph.M;
+      for (int q = 0; q < graph.K; q++)
+        graph.total_edges += graph.he[q];
+      graph.total_edges /= 2;
       if (computeOnlyCodim == -1 ||
           graph.total_edges == computeOnlyCodim)
         {

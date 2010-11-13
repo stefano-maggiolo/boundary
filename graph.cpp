@@ -162,7 +162,6 @@ Graph::Graph(const Graph& g2)
   memmove(g, g2.g, sizeof(uchar)*K);
   memmove(m, g2.m, sizeof(uchar)*K);
   memmove(l, g2.l, sizeof(uchar)*K);
-  memmove(edges, g2.edges, sizeof(uchar)*K);
   for (int i = 0; i < K; i++)
     memmove(a[i], g2.a[i], sizeof(uchar)*K);
   memmove(gDegrees, g2.gDegrees, sizeof(uchar)*(G+2));
@@ -225,7 +224,6 @@ Graph::Clear(uchar newK)
   memset(m, 0, sizeof(uchar)*K);
   memset(l, 0, sizeof(uchar)*K);
   connections = 0;
-  memset(edges, 0, sizeof(uchar)*K);
   total_edges = 0;
 
   // And we start with the formula corresponding to no edge and
