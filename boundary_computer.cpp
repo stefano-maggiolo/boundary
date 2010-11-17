@@ -253,7 +253,7 @@ BoundaryComputer::bt_g(int i)
 
       // a. we split the edges in K-1 connection edges and the
       //    remaining. Connection edges contribute to one
-      //    stabilization for every vertex, plus K-2 stabilization
+      //    stabilization for every vertex, plus K-2 stabilizations
       //    that we can choose how to distribute; the remaining
       //    $|E|-(K-1)$ edges give us 2 stabilization each, hence the
       //    total number of stabilizations are $2(|E|-(K-1)) + K-2 =
