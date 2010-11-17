@@ -11,6 +11,12 @@ from test_graph import plot
 
 correct = {}
 
+correct[(0,0)] = ((),
+                  ())
+correct[(0,1)] = ((),
+                  ())
+correct[(0,2)] = ((),
+                  ())
 correct[(0,3)] = ((0,1,),
                   (1,))
 correct[(0,4)] = ((0,1,1,),
@@ -38,6 +44,8 @@ correct[(0,14)] = ((0,1,6,30,126,397,978,1804,2498,2456,1662,672,135,),
 correct[(0,15)] = ((0,1,6,36,163,588,1636,3550,5856,7260,6489,3978,1483,265,),
                    (1,6,36,163,588,1636,3550,5856,7260,6489,3978,1483,265,))
 
+correct[(0,0)] = ((),
+                  ())
 correct[(1,1)] = ((0,2,),
                   (1,1,))
 correct[(1,2)] = ((0,2,3,),
@@ -112,35 +120,50 @@ correct[(5,2)] = ((0,6,175,1936,11223,38259,81297,108570,89321,41251,8517,),
 correct[(6,0)] = ((0,7,97,699,3100,8662,15961,19043,14525,6338,1376,),
                   (1,4,14,56,185,571,1511,3500,6740,10831,13853,13997,10508,5712,1937,388,))
 
-easy = [
-    (0,3), (0,4), (0,5), (0,6), (0,7),
-    (0,8), (0,9), (0,10), (0,11), (0,12), # K=10 C=9
-    (1,1), (1,2), (1,3), (1,4),
-    (1,5), (1,6), (1,7), (1,8), # K=8 C=8
-    (2,0), (2,1), (2,2), (2,3), (2,4), (2,5), # K=7 C=8
-    (3,0), (3,1), (3,2), (3,3), # K=7 C=9
-    (4,0), (4,1), # K=7 C=10
-    (5,0), # K=8 C=10
+easy = [ # <= 10''
+    (0,0), (0,1), (0,2), (0,3), (0,4), (0,5),
+    (0,6), (0,7), (0,8), (0,9), (0,10), (0,11),
+    (0,12), (0,13), (0,14), (0,15), (0,16), # K=14 C=13
+    (1,0), (1,1), (1,2), (1,3), (1,4), (1,5), (1,6),
+    (1,7), (1,8), (1,9), (1,10), (1,11), (1,12), # K=12 C=12
+    (2,0), (2,1), (2,2), (2,3), (2,4),
+    (2,5), (2,6), (2,7), (2,8), (2,9), # K=11 C=12
+    (3,0), (3,1), (3,2), (3,3),
+    (3,4), (3,5), (3,6), # K=10 C=12
+    (4,0), (4,1), (4,2), (4,3), # K=9 C=12
+    (5,0), (5,1), # K=9 C=13
+    (6,0), # K=10 C=15
     ]
-average = [
-    (0,13), (0,14), # K=12 C=11
-    (1,9), (1,10), # K=10 C=10
-    (2,6), (2,7), # K=9 C=10
-    (3,4), (3,5), # K=9 C=11
-    (4,2), (4,3), # K=9 C=12
-    (5,1), # K=9 C=11
-    ]
-hard = [
-    (0,15), (0,16), # K=14 C=13
-    (1,11), (1,12), # K=12 C=12
-    (2,8), (2,9), # K=11 C=12
-    (3,6), # K=10 C=12
+average = [ # <= 5'
+    (0,17), # K=15 C=14
+    (1,13), # K=13 C=13
+    (2,10), # K=12 C=13
+    (3,7), # K=11 C=13
     (4,4), # K=10 C=13
-    (5,2), # K=10 C=12
-    (6,0), (6,1), # K=11 C=16
+    (5,2), # K=10 C=14
+    (6,1), # K=11 C=16
+    ]
+hard = [ # <= 1h
+    (0,18), # K=16 C=15
+    (1,14), # K=14 C=14
+    (2,11), # K=13 C=14
+    (3,8), # K=12 C=14
+    (4,5), # K=11 C=14
+    (5,3), # K=11 C=15
+    # K=11 C=16
     (7,0), # K=12 C=18
     ]
-gns = easy+average+hard
+extreme = [ # <= 10h
+    (0,19), #(0,20), # K=18 C=17
+    (1,15), # K=15 C=15
+    #(2,12), # K=14 C=15
+    # K=12 C=14
+    #(4,6), # K=12 C=15
+    #(5,4), # K=12 C=14
+    #(6,2), # K=12 C=16
+    # K=12 C=18
+    ]
+gns = easy+average+hard+extreme
 
 # Utility functions
 
@@ -202,7 +225,7 @@ def compute(name, flags, gn, maxTime = 60*5000):
     current = {}
     current["flags"] = flags
     current["name"] = name
-    output = open("%s_%02d_%02d" % (name, gn[0], gn[1]), "w")
+    output = open("solutions/%s_%02d_%02d" % (name, gn[0], gn[1]), "w")
     process = Popen("%s -P B -S T %d %d" %
                     (name, gn[0], gn[1]),
                     shell=True, bufsize=1,
@@ -257,24 +280,16 @@ def addToStore(name, replace = False):
         print "\nAlready in store (use delete or replace)!"
         exit(1)
     p[flags] = {}
-    for gn in gns:
-        try:
-            p[flags][gn] = compute(name, flags, gn)
-        except:
-            if flags in p:
-                del(p[flags])
-            return
-    computeBest()
+    fill(name)
 
-def fill():
-    for f in p.keys():
-        name = p[f][p[f].keys()[0]]["name"]
-        for gn in gns:
-            if gn in p[f].keys(): continue
-            p[f][gn] = compute(name, f, gn)
-            if p[f][gn] == None:
-                del(p[f])
-                break
+def fill(name = None):
+    for gn in gns:
+        for f in p.keys():
+            if gn not in p[f].keys():
+                if name == None:
+                    name = p[f][p[f].keys()[0]]["name"]
+                p[f][gn] = compute(name, f, gn)
+                sync()
     computeBest()
 
 def computeBest():
@@ -514,8 +529,11 @@ def flagsFromPar(s):
     if s in p:
         return s
     for x in p.keys():
-        if s == p[x][gns[0]]["name"]:
-            return x
+        try:
+            if s == p[x][gns[0]]["name"]:
+                return x
+        except:
+            pass
     s = int(s)
     if s > 0 and s <= len(p):
         return sorted(p.keys())[s-1]
@@ -538,16 +556,19 @@ def plotSM():
     xAxis[2].sort()
 
     def compgn(gn1, gn2):
-        return sum(p[best[gn1]][gn1]["time"]) - sum(p[best[gn2]][gn2]["time"])
+        try:
+            return sum(p[best[gn1]][gn1]["time"]) - sum(p[best[gn2]][gn2]["time"])
+        except:
+            return 0
     xAxis[3] = gns
     xAxis[3].sort(cmp = compgn)
 
     for x in p.keys():
         for i in range(numPlots):
-            s = [sum(p[x][gn]["time"]) for gn in xAxis[i]]
+            s = [gn in p[x] and sum(p[x][gn]["time"]) or 0 for gn in xAxis[i]]
+            m = [gn in p[x] and max((300,)+p[x][gn]["memory"]) or 0 for gn in xAxis[i]]
             seriesS[i].append(s)
-            s = [max(p[x][gn]["memory"]) for gn in xAxis[i]]
-            seriesM[i].append(s)
+            seriesM[i].append(m)
         legend.append(compressFlags(x))
 
     for i in range(numPlots):
@@ -567,9 +588,12 @@ def gpDump(name):
         print "Flag not in store!"
         exit(1)
 
-    for gn in p[f]:
+    curg = -1
+    for gn in sorted(p[f].keys()):
+        if gn[0] != curg: print
+        curg = gn[0]
         x = p[f][gn]
-        print gn[0], gn[1], x["memory"][-1], sum(x["time"]), sum(x["found"]), sum(x["unconnected"]), sum(x["duplicated"])
+        print gn[0], gn[1], max((300,)+x["memory"]), max(10, sum(x["time"])), sum(x["found"]), sum(x["unconnected"]), sum(x["duplicated"])
         
 def printStored():
     print "Stored:"
@@ -594,10 +618,13 @@ def printStored():
 
 # Exactness on all tests is required for storing a performance.
 
-
+def sync():
+    global p
+    p.close()
+    p = shelve.open("performances", writeback = True)
+        
 if __name__ == "__main__":
     p = shelve.open("performances", writeback = True)
-    best, overall = computeBest()
 
     if len(argv) == 1: exit(1)
     elif len(argv) == 2:
@@ -606,6 +633,7 @@ if __name__ == "__main__":
         elif argv[1] == "fill":
             fill()
         elif argv[1] == "plot":
+            best, overall = computeBest()
             plotSM()
         else:
             exit(1)
@@ -615,6 +643,7 @@ if __name__ == "__main__":
         elif argv[1] == "replace":
             addToStore(flagsFromPar(argv[2]), replace = True)
         elif argv[1] == "compare":
+            best, overall = computeBest()
             compare(flagsFromPar(argv[2]))
         elif argv[1] == "remove":
             f = flagsFromPar(argv[2])
@@ -628,6 +657,7 @@ if __name__ == "__main__":
             exit(1)
     elif len(argv) == 4:
         if argv[1] == "compare":
+            best, overall = computeBest()
             compareTwo(flagsFromPar(argv[2]), flagsFromPar(argv[3]))
         else:
             exit(1)

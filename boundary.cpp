@@ -153,7 +153,7 @@ ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printe
 void
 PrintCompilationFlags(void)
 {
-  static char r[] = "$Rev$";
+  static char r[] = "$Rev: 27 $";
   int l = strlen(r);
   r[l-2] = '\0';
   fprintf(stderr, "Compilation flags: ");

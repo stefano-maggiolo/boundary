@@ -35,12 +35,10 @@ TextGraphPrinter::BeginPrint(void)
 void
 TextGraphPrinter::PrintSomeGraph(map< uchar, vector< Graph* > >& store)
 {
-  for (int i = 0; i <= 3*G-3+M; i++)
-    for (map< uchar, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
-      for (vector< Graph* >::iterator t = s->second.begin(); t != s->second.end(); ++t)
-        if ((*t)->total_edges == i)
-          if (printOnlyCodim == -1 || (*t)->total_edges == printOnlyCodim)
-            (*t)->PrintNormal(file);
+  for (map< uchar, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
+    for (vector< Graph* >::iterator t = s->second.begin(); t != s->second.end(); ++t)
+      if (printOnlyCodim == -1 || (*t)->total_edges == printOnlyCodim)
+        (*t)->PrintNormal(file);
 }
 
 void

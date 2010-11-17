@@ -25,9 +25,9 @@ class BoundaryComputer: public Computer
   BoundaryComputer(int g, int n);
   vector< Graph* >& GetAllResults(void);
   map< uchar, vector< Graph* > >& GetAllResultsByCodimension(void);
-  void Compute(GraphPrinter &printer, enum Statistics stat, int computeOnlyCodim);
-  void Compute(GraphPrinter &printer, enum Statistics stat);
-  void Compute(GraphPrinter &printer);
+  void Compute(GraphPrinter &graph_printer, enum Statistics stat, int computeOnlyCodim);
+  void Compute(GraphPrinter &graph_printer, enum Statistics stat);
+  void Compute(GraphPrinter &graph_printer);
   void Statistics(FILE* file);
   void TerseStatistics(FILE* file);
 
@@ -43,7 +43,9 @@ class BoundaryComputer: public Computer
   int visit(int i);
   bool duplicate();
   void add_to_store(void);
+  void empty_store_to_statistics(void);
 
+  GraphPrinter *printer;
   int G;
   int M;
   bool computed;

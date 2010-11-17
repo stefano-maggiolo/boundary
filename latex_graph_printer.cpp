@@ -50,7 +50,7 @@ LaTeXGraphPrinter::BeginPrint(void)
   fprintf(file, "\\begin{document}\n");
   fprintf(file, "\\maketitle\n");
   fprintf(file, "\n");
-  fprintf(file, "Legend: Id = (components, unique id, codimension); G = Graph.\n");
+  fprintf(file, "Legend: Id = (components, codimension, unique id); G = Graph.\n");
   fprintf(file, "\n");
   fprintf(file, "  \\begin{longtable}{c@{}c");
   for (int i = 0; i < rowLength-1; i++)
@@ -71,12 +71,10 @@ LaTeXGraphPrinter::BeginPrint(void)
 void
 LaTeXGraphPrinter::PrintSomeGraph(map< uchar, vector< Graph* > >& store)
 {
-  for (int i = 0; i <= 3*G-3+M; i++)
-    for (map< uchar, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
-      for (vector< Graph* >::iterator t = s->second.begin(); t != s->second.end(); ++t)
-        if ((*t)->total_edges == i)
-          if (printOnlyCodim == -1 || (*t)->total_edges == printOnlyCodim)
-            print_middle(*t, false);
+  for (map< uchar, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
+    for (vector< Graph* >::iterator t = s->second.begin(); t != s->second.end(); ++t)
+      if (printOnlyCodim == -1 || (*t)->total_edges == printOnlyCodim)
+        print_middle(*t, false);
 }
 
 void
@@ -111,7 +109,7 @@ LaTeXGraphPrinter::print_middle(Graph *graph, bool level_by_vertices)
         fprintf(file, " &");
       fprintf(file, " \\\\\n");
     }
-  fprintf(file, "    $\\scriptstyle{(%d, %d, %d)}$ & \n", graph->K, counter, c);
+  fprintf(file, "    $\\scriptstyle{(%d, %d, %d)}$ & \n", graph->K, c, counter);
 
   graph->PrintLaTeX(file);
 

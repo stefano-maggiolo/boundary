@@ -9,63 +9,17 @@ BOUNDARY2ORDEREDOBJS = boundary2ordered.o graph.o $(PRINTEROBJS) $(READEROBJS) $
 NAUTYOBJS = ./nauty/nauty.o ./nauty/nautil.o ./nauty/naugraph.o ./nauty/naututil.o ./nauty/rng.o
 HDRS = $(wildcard *.h)
 
-# Flags available:
+# EMPTY_OFTEN: this flag makes boundary to push to output the
+# graphs after each possibility for the data K,g,n,l (instead of 
+# after each possibility for K). This is really useful to save
+# memory, but makes the computation a little slower and orders the
+# graph in output in a different way.  
+#
+# BLADEBUG: For each value of K,g,n,l, prints the number of stable
+# graphs with that values
 
-#   USE_LINES_MAP (default=no)
-
-#     Let simple_divisions be the vector with positions i such that
-#     g[i-1] != g[i] or m[i-1] != m[i] or l[i-1] != l[i]; then with
-#     this flag, before comparing two graphs g1 and g2 the program
-#     compare the number of x's in the strip [i...j-1, 1...n] (where i
-#     and j are successive elements of simple_divisions, and x are
-#     natural numbers. If they differ, the graphs cannot be
-#     isomorphic.
-
-#   USE_LINES_NO_MAP (default=no)
-
-#     For every strip [i...j-1, 1...K] as before, sorts each row of
-#     the graph g1 and g2, and then sorts the rows
-#     lexicographically. If the strips obtained differ, then g1 cannot
-#     be isomorphic to g2. More refined than USE_LINES_MAP, and faster
-#     for low number of nodes K.
-
-#   USE_DEGREES_MAP (defaul=no)
-
-#     For every rectangle [i...j-1, i'...j'-1], with i and j, and i'
-#     and j', successive elements in simple_divisions, compares the
-#     number of x's in the rectangles of the two graphs. If these
-#     numbers differ, g1 cannot be isomorphic to g2.
-
-#   USE_DEGREES_NO_MAP (default=no)
-
-#     For every rectangle [i...j-1, i'...j'-1], as before, sorts each
-#     row of the rectangles, and the sorts the rows
-#     lexicographically. If the rectangles differ, then g1 cannot be
-#     isomorphic to g2. More refined than USE_DEGREES_MAP and faster
-#     for low number of nodes K.
-
-#   START_LAPACK_COMPUTATION (default=no)
-
-#     Before testing isomorphism of two graphs with number of nodes at
-#     least START_LAPACK_COMPUTATION, compute the eigenvalues of the
-#     adjacency matrices. If the sorted vectors of eigenvalues differ,
-#     the graphs are not isomorphic. If there is an eigenvalue with
-#     one-dimensional eigenspace and such that the coefficient of the
-#     corresponding eigenvector are all distinct, than the only
-#     possibility for g1 and g2 to be isomorphic is that one is the
-#     permutation of the other via the permutation matrix obtained by
-#     the permutation of the coefficients of the eigenvector. If this
-#     permutation failed to provide an isomorphism, or it sends a node
-#     to a node with different genus, number of marked points, number
-#     of loops, then the graphs cannot be isomorphic.
-
-#   USE_NAUTY (default=yes)
-
-#     Use nauty to check if two graphs are isomorphic.
-
-CPPFLAGS = -O3 -DHAVE_GETRUSAGE=1 -DHAVE_MAXRSS=0 #-DBLADEBUG
+CPPFLAGS = -O3 -DHAVE_GETRUSAGE=1 -DHAVE_MAXRSS=0 -DEMPTY_OFTEN #-DBLADEBUG
 STRATAFLAGS = -DUSE_NAUTY
-#BOUNDARYFLAGS = -DUSE_LINES_NO_MAP -DUSE_DEGREES_NO_MAP -llapackpp -DSTART_LAPACK_COMPUTATION=9
 
 all: $(EXES)
 

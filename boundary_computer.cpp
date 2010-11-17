@@ -27,8 +27,10 @@ BoundaryComputer::GetAllResultsByCodimension(void)
 }
 
 void
-BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int computeOnlyCodim)
+BoundaryComputer::Compute(GraphPrinter &graph_printer, enum Statistics stats, int computeOnlyCodim)
 {
+  printer = &graph_printer;
+
   if (2*G-3+M < 0)
     {
       computed = true;
@@ -41,7 +43,7 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
   statisticsTime.assign(2*G-2+M+1, 0);
   statisticsMemory.assign(2*G-2+M+1, 0);
 
-  printer.BeginPrint();
+  printer->BeginPrint();
   this->computeOnlyCodim = computeOnlyCodim;
 
   // Initialization.
@@ -111,18 +113,10 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
             statisticsMemory[graph.K] / 102 % 10);
 #else
   if (stats == Full)
-    fprintf(stderr, "done.\n"),
+    fprintf(stderr, "done.\n");
 #endif
 
-  printer.PrintSomeGraph(store);
-  for (map< uchar, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
-    {
-      statistics[s->first] += s->second.size();
-      for (vector< Graph* >::iterator t = s->second.begin(); t != s->second.end(); ++t)
-        delete *t;
-    }
-  store.clear();
-  divstore.clear();
+  empty_store_to_statistics();
 
   // We have at most 2G-2+M components for a curve of genus G and M
   // marked points.
@@ -182,15 +176,10 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
         fprintf(stderr, "done.\n");
 #endif
 
-      printer.PrintSomeGraph(store);
-      for (map< uchar, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
-        {
-          statistics[s->first] += s->second.size();
-          for (vector< Graph* >::iterator t = s->second.begin(); t != s->second.end(); ++t)
-            delete *t;
-        }
-      store.clear();
-      divstore.clear();
+#ifndef EMPTY_OFTEN
+      empty_store_to_statistics();
+#endif
+
 #ifdef BLADEBUG
       for (map< pair< vector< int >, pair< vector< int >, vector< int > > >, int >::iterator s = bla_gnl.begin(); s != bla_gnl.end(); ++s)
         {
@@ -208,7 +197,7 @@ BoundaryComputer::Compute(GraphPrinter &printer, enum Statistics stats, int comp
 #endif
     }
 
-  printer.EndPrint();
+  printer->EndPrint();
   computed = true;
 
   if (stats== Full) Statistics(stderr);
@@ -511,6 +500,9 @@ BoundaryComputer::bt_l(int i)
       for (int q = 0; q < graph.p1; q++)
         graph.stab_he_3 += min(3, (int)graph.he[q]);
       bt_a(0, 1);
+#ifdef EMPTY_OFTEN
+      empty_store_to_statistics();
+#endif
     }
 }
 
@@ -718,6 +710,20 @@ BoundaryComputer::duplicate(void)
     if ((*s)->Equal(graph))
       return true;
   return false;
+}
+
+void
+BoundaryComputer::empty_store_to_statistics(void)
+{
+  printer->PrintSomeGraph(store);
+  for (map< uchar, vector< Graph* > >::iterator s = store.begin(); s != store.end(); ++s)
+    {
+      statistics[s->first] += s->second.size();
+      for (vector< Graph* >::iterator t = s->second.begin(); t != s->second.end(); ++t)
+        delete *t;
+    }
+  store.clear();
+  divstore.clear();
 }
 
 void

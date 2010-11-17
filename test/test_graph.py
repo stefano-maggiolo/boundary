@@ -10,17 +10,17 @@ def plot(xAxis, series, name, logarithmic = True, scale = 1.0, title = "", legen
     for s in series:
         for i in range(len(s)):
             if logarithmic:
-                if s[i] > 0 and log(s[i]) > top: top = log(s[i])
+                if s[i] > 0: top = max(top, log(s[i]))
             else:
-                if s[i]/scale > top: top = s[i]/scale
+                top = max(s[i]/scale, top)
     top = int(top + 1)
-    if top <= 1: top = 2
+    top = max(2, top)
 
-    chart = SimpleLineChart(600, 400, y_range=[0,top], title = title)
-
+    chart = SimpleLineChart(650, 400, y_range=[0,top], title = title)
+#    chart = GroupedVerticalBarChart(600, 400, y_range=[0,top], title = title)
     def proc(x):
         if logarithmic:
-            if x <= 0: return 0
+            if x < 1: return 0
             else: return log(x)
         else:
             return x/scale
