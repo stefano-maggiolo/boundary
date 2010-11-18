@@ -563,40 +563,34 @@ BoundaryComputer::bt_a(int i, int j)
       // => a_ij <= G-sum - 2p1 + stab_he_2
       int max_stab_gained = max(0, 3-graph.he[i]) + max(0, 3-graph.he[j]);
       end = min(end, (2*(graph.G-graph.sum) - 3*graph.p1 + graph.stab_he_3 + max_stab_gained)/2);
+
+      // We check the following, to ensure that the sum = G and
+      // that all genus 0 curve are stabilized.
+      if (j == graph.K-1)
+        {
+          // If this is the last chance to add edge to a genus 0
+          // curve, we add enough to stabilize it.
+          if (is_i_p1)
+            start = max(start, 3 - graph.he[i]);
+          // If we're finishing...
+          if (i == graph.K-2)
+            {
+              // For i = K-1, the last chance is actually at i = K-2.
+              if (graph.p1 == graph.K)
+                start = max(start, 3 - graph.he[graph.K-1]);
+              // The grand total has to be G.
+              start = max(start, graph.G - graph.sum);
+              end = min(end, graph.G - graph.sum);
+            }
+          // A curve has to be connected to at least one different
+          // curve.
+          if (graph.he[i] == graph.m[i]+2*graph.l[i])
+            start = max(start, 1);
+          else if (i == graph.K-2 && graph.he[graph.K-1] == graph.m[graph.K-1] + 2*graph.l[graph.K-1])
+            start = max(start, 1);
+        }
       for (int n = start; n <= end; n++)
         {
-          // We check the following, to ensure that the sum = G and
-          // that all genus 0 curve are stabilized.
-          if (j == graph.K-1)
-            {
-              // If this is the last chance to add edge to a genus 0
-              // curve, we add enough to stabilize it.
-              if (is_i_p1 && graph.he[i]+n < 3)
-                continue;
-              // If we're finishing...
-              if (i == graph.K-2)
-                {
-                  // For i = K-1, the last chance is actually at i = K-2.
-                  if (graph.p1 == graph.K && graph.he[graph.K-1]+n < 3)
-                    continue;
-                  // The grand total has to be G.
-                  else if (graph.sum + n != graph.G)
-                    continue;
-                }
-              // If we don't connect the curve now...
-              if (n == 0)
-                {
-                  // A curve has to be connected to at least one
-                  // different curve.
-                  if (graph.he[i] == graph.m[i]+2*graph.l[i])
-                    continue;
-                  // For i = K-1, last chance to connect the last
-                  // curve.
-                  else if (i == graph.K-2 && graph.he[graph.K-1] == graph.m[graph.K-1] + 2*graph.l[graph.K-1])
-                    continue;
-                }
-              // All right!
-            }
           // Changes induced by a[i][j] = n.
           graph.a[i][j] = n;
           graph.a[j][i] = n;
