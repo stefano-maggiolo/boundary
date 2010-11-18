@@ -10,40 +10,40 @@ NAUTYOBJS = ./nauty/nauty.o ./nauty/nautil.o ./nauty/naugraph.o ./nauty/naututil
 HDRS = $(wildcard *.h)
 
 # EMPTY_OFTEN: this flag makes boundary to push to output the
-# graphs after each possibility for the data K,g,n,l (instead of 
+# graphs after each possibility for the data K,g,n,l (instead of
 # after each possibility for K). This is really useful to save
 # memory, but makes the computation a little slower and orders the
-# graph in output in a different way.  
+# graph in output in a different way.
 #
-# BLADEBUG: For each value of K,g,n,l, prints the number of stable
-# graphs with that values
+# DEBUG_GNL_COUNT: For each value of K,g,n,l, prints the number of
+# stable graphs with that values
 
-CPPFLAGS = -O3 -DHAVE_GETRUSAGE=1 -DHAVE_MAXRSS=0 -DEMPTY_OFTEN #-DBLADEBUG
-STRATAFLAGS = -DUSE_NAUTY
+BOUNDARYFLAGS = -DUSE_NAUTY #-DEMPTY_OFTEN #-DDEBUG_GNL_COUNT
+CPPFLAGS = -O3 -DHAVE_GETRUSAGE=1 -DHAVE_MAXRSS=0
 
 all: $(EXES)
 
 -include depend
 
 boundary: $(BOUNDARYOBJS) depend
-	g++ -o boundary $(BOUNDARYOBJS) $(CPPFLAGS) $(STRATAFLAGS) $(NAUTYOBJS)
+	g++ -o boundary $(BOUNDARYOBJS) $(CPPFLAGS) $(BOUNDARYFLAGS) $(NAUTYOBJS)
 
 boundary2ordered: $(BOUNDARY2ORDEREDOBJS) depend
-	g++ -o boundary2ordered $(BOUNDARY2ORDEREDOBJS) $(CPPFLAGS) $(STRATAFLAGS) $(NAUTYOBJS)
+	g++ -o boundary2ordered $(BOUNDARY2ORDEREDOBJS) $(CPPFLAGS) $(BOUNDARYFLAGS) $(NAUTYOBJS)
 
 %.o: %.cpp $(HDRS)
-	g++ -c -o $*.o $*.cpp $(CPPFLAGS) $(STRATAFLAGS)
+	g++ -c -o $*.o $*.cpp $(CPPFLAGS) $(BOUNDARYFLAGS)
 
 depend: $(SRCS)
-	g++ -MM $(CPPFLAGS) $(STRATAFLAGS) $^ > $@
+	g++ -MM $(CPPFLAGS) $(BOUNDARYFLAGS) $^ > $@
 
 clean:
-	rm -f $(OBJS) $(EXES) strata2.tar.gz
+	rm -f $(OBJS) $(EXES) boundary.tar.gz
 
 clean_depend: clean
 	rm -f depend
 
 backup:
-	tar cf strata2.tar.gz ./
+	tar cf boundary.tar.gz ./
 
 .PHONY: clean clean_depend backup all

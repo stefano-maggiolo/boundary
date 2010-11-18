@@ -139,10 +139,10 @@ BoundaryComputer::Compute(GraphPrinter &graph_printer, enum Statistics stats, in
   // marked points.
   for (int K = 2; K <= 2*graph.G-2+graph.M; K++)
     {
-#ifdef BLADEBUG
-      bla_g.clear();
-      bla_gn.clear();
-      bla_gnl.clear();
+#ifdef DEBUG_GNL_COUNT
+      count_g.clear();
+      count_gn.clear();
+      count_gnl.clear();
 #endif
       if (computeOnlyCodim != -1 && K > computeOnlyCodim + 1) break;
 
@@ -197,8 +197,8 @@ BoundaryComputer::Compute(GraphPrinter &graph_printer, enum Statistics stats, in
       empty_store_to_statistics();
 #endif
 
-#ifdef BLADEBUG
-      for (map< pair< vector< int >, pair< vector< int >, vector< int > > >, int >::iterator s = bla_gnl.begin(); s != bla_gnl.end(); ++s)
+#ifdef DEBUG_GNL_COUNT
+      for (map< pair< vector< int >, pair< vector< int >, vector< int > > >, int >::iterator s = count_gnl.begin(); s != count_gnl.end(); ++s)
         {
           fprintf(stderr, "%6d     (", s->second);
           for (int i = 0; i < K-1; i++)
@@ -302,8 +302,8 @@ BoundaryComputer::bt_g(int i)
     {
       // If we decided all the genera, we go to assign values to the
       // marked points.
-#ifdef BLADEBUG
-      bla_g[vector<int>(graph.g,graph.g+graph.K)] = 0;
+#ifdef DEBUG_GNL_COUNT
+      count_g[vector<int>(graph.g,graph.g+graph.K)] = 0;
 #endif
       bt_m(0);
     }
@@ -392,8 +392,8 @@ BoundaryComputer::bt_m(int i)
     {
       // If we decided all the marked points, we go to assign values
       // to the diagonal of the adjacency matrix.
-#ifdef BLADEBUG
-      bla_gn[make_pair(vector<int>(graph.g,graph.g+graph.K), vector<int>(graph.m,graph.m+graph.K))] = 0;
+#ifdef DEBUG_GNL_COUNT
+      count_gn[make_pair(vector<int>(graph.g,graph.g+graph.K), vector<int>(graph.m,graph.m+graph.K))] = 0;
 #endif
       bt_l(0);
     }
@@ -509,8 +509,8 @@ BoundaryComputer::bt_l(int i)
        // to the rest of the upper triangle of the matrix, row by row,
        // from left to right.
     {
-#ifdef BLADEBUG
-      bla_gnl[make_pair(vector<int>(graph.g,graph.g+graph.K), make_pair(vector<int>(graph.m,graph.m+graph.K), vector<int>(graph.l,graph.l+graph.K)))] = 0;
+#ifdef DEBUG_GNL_COUNT
+      count_gnl[make_pair(vector<int>(graph.g,graph.g+graph.K), make_pair(vector<int>(graph.m,graph.m+graph.K), vector<int>(graph.l,graph.l+graph.K)))] = 0;
 #endif
       memset(graph.gDegrees, 0, sizeof(uchar)*(graph.G+2));
       graph.stab_he_3 = 0;
@@ -665,10 +665,10 @@ BoundaryComputer::bt_a(int i, int j)
 void
 BoundaryComputer::add_to_store(void)
 {
-#ifdef BLADEBUG
-  bla_g[vector<int>(graph.g,graph.g+graph.K)]++;
-  bla_gn[make_pair(vector<int>(graph.g,graph.g+graph.K), vector<int>(graph.m,graph.m+graph.K))]++;
-  bla_gnl[make_pair(vector<int>(graph.g,graph.g+graph.K), make_pair(vector<int>(graph.m,graph.m+graph.K), vector<int>(graph.l,graph.l+graph.K)))]++;
+#ifdef DEBUG_GNL_COUNT
+  count_g[vector<int>(graph.g,graph.g+graph.K)]++;
+  count_gn[make_pair(vector<int>(graph.g,graph.g+graph.K), vector<int>(graph.m,graph.m+graph.K))]++;
+  count_gnl[make_pair(vector<int>(graph.g,graph.g+graph.K), make_pair(vector<int>(graph.m,graph.m+graph.K), vector<int>(graph.l,graph.l+graph.K)))]++;
 #endif
   Graph *ng = new Graph(graph);
   store[ng->total_edges].push_back(ng);
