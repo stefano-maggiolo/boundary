@@ -1,1 +1,28 @@
 This program generates the dual graph of stable curves.
+
+Description of the sources:
+
+- boundary.* is the main file, that parses command line and call
+  everything else.
+
+- graph.* contains the class Graph, that describes a colored graph
+  (stable or not); also, contains the class GraphClass, that stores
+  some of the invariants of a graph.
+
+- *printer.* are the classes that provides printing facilities of the
+  graphs; the one without the prefix is an interface, the others print
+  graphs in different ways (does not print, print text, latex source,
+  or in a compact binary format).
+
+- *computer.* are the classes that do the actual computation; again,
+  the one without a prefix is the interface, boundary_computer.cpp is
+  the only one working, ct_computer should compute compact tail stable
+  graphs (but currently does not work), and boundary_computer_2 is an
+  alternative approach that currently does not work.
+
+- *reader.* are the classes that transform input in some form in
+  object of the class Graph; currently not used.
+
+- constants.h describes the limits under which the program works; in
+  particular, every number must be inside the range of "uchar" and G
+  and N must be under the limits stated.
