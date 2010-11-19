@@ -226,12 +226,6 @@ otherwise, it can only start from the value assigned to the index
 $i-1$ (i.e., the datum we are deciding must be non decreasing at the
 index $i$).
 
-\begin{notation}
-  We will denote the endpoints of the range of values that the program
-  tries to assign to $g_i$ as $g_i^{\min}$ and $g_i^{\MAX}$;
-  \emph{mutatis mutandis\/} for the other data.
-\end{notation}
-
 \begin{remark}
   We choose the ranges for the data $g$, $n$, and $l$, in such a way
   that for any data $(g, n, l)$ the program generates, there is at
@@ -244,6 +238,15 @@ index $i$).
   the least number of edges, to connect the graph). Hence, at least
   this worst case is stable and with those data.
 \end{remark}
+
+At the end of the $i$-th row of the matrix, we test that the $i$-th
+vertex is connected to at least another vertex. If $g_i$ equals zero
+we also check the stability of the $i$-th vertex.
+
+When the matrix is fully filled, we test that
+Condition~\ref{it:condition genus} holds, and that the graph is
+actually connected. If this is the case, we add the graph to the list,
+provided that it is not isomorphic to a previously found graph.
 
 
 
@@ -258,26 +261,29 @@ index $i$).
 \end{notation}
 
 \begin{notation}
-  When deciding $g$, $n$, or $l$, we let $\tilde{n}_i$ be the minimum
+  When deciding $g$, $n$, or $l$, we let $n^{(2)}_i$ be the minimum
   between $2$ and the number of half edges already assigned to the
   $i$-th vertex. This is justified by the fact that we know that at
   least one half edge will be assigned to the $i$-th vertex to connect
-  it to the rest of the graph. Hence, whenever $g_i = 0$,
-  $\tilde{n}_i$ represent the number of \emph{stabilizing\/} half
-  edges, in the sense that they are not useless for the aim of
-  stabilizing the curve. We define also
+  it to the rest of the graph. Hence, whenever $g_i = 0$, $n^{(2)}_i$
+  represent the number of \emph{stabilizing\/} half edges, in the
+  sense that they are not useless for the aim of stabilizing the
+  curve. When deciding $a_{i,j}$, it is also useful to have defined
+  $h_i$, the total number of half edges hitting the $i$-th
+  vertex. Finally, we define
   \begin{align*}
-    N_i &\coloneqq \sum_{\substack{j < i\\g_j = 0}} n_j\,\text{,} &
-    \tilde{N} &\coloneqq \sum_{g_j = 0} \tilde{n}_j\,\text{,} &
-    \tilde{N}_i &\coloneqq \sum_{\substack{j < i\\g_j = 0}} \tilde{n}_j\,\text{;}\\
-    G_i &\coloneqq \sum_{j < i} g_j\,\text{,} &
-    L_i &\coloneqq \sum_{j < i} l_j\,\text{.}
+    G_i &\coloneqq \sum_{i^\prime < i} g_{i^\prime}\,\text{,} &
+    N_i &\coloneqq \sum_{\substack{i^\prime < i\\g_{i^\prime} = 0}} n_{i^\prime}\,\text{,}\\
+    N^{(2)} &\coloneqq \sum_{g_{i^\prime} = 0} n^{(2)}_{i^\prime}\,\text{,} &
+    N^{(2)}_i &\coloneqq \sum_{\substack{i^\prime < i\\g_{i^\prime} = 0}} n^{(2)}_{i^\prime}\,\text{;}\\
+    L_i &\coloneqq \sum_{i^\prime < i} l_{i^\prime}\,\text{,} &
+    A_{i,j} &\coloneqq \sum_{\mathclap{i^\prime < i \vee j^\prime < j}} a_{i^\prime, j^\prime}\,\text{.}
   \end{align*}
 \end{notation}
 
 We are now ready to describe the ranges in which the data can vary.
 
-\subsection{Endpoints for $g_i$}
+\subsection{Range for $g_i$}
 
 When the algorithm is deciding the value of $g_i$, we have the
 following situation:
@@ -297,14 +303,15 @@ following situation:
   since one half edge comes for free from the connection of the graph.
 \end{itemize}
 
-Since $g$ is the first vector to be generated, we can do so in a
-non-decreasing fashion, hence:
-\[
-g_i^{\min} = g_{i-1}
-\]
-(remember that $g_j = 0$ whenever $j \not\in \ubar{K}$). On the other
-hand $g_i^{\MAX}$ is computed in thanks to the following conditions:
+We use the following conditions to limit the choices we have for
+$g_i$:
 \begin{itemize}
+\item since $g$ is the first vector to be generated, there is no
+  division before $i$, hence
+  \[
+  g_i \geq g_{i-1}\text{;}
+  \]
+  remember that $g_j = 0$ whenever $j \not\in \ubar{K}$;
 \item we need at least $K-1$ non-loop edges, hence (using the fact
   that $\sum_{j \geq i} g_j \geq (K-i) g_i$)
   \begin{align*}
@@ -322,10 +329,7 @@ hand $g_i^{\MAX}$ is computed in thanks to the following conditions:
   \end{align*}
 \end{itemize}
 
-According to our idea of divisions, we set a division before $i$
-whenever $g_i$ is assigned a value strictly bigger than $g_{i-1}$.
-
-\subsection{Endpoints for $n_i$}
+\subsection{Range for $n_i$}
 
 When deciding $n_i$, we have the following situation:
 \begin{itemize}
@@ -334,26 +338,18 @@ When deciding $n_i$, we have the following situation:
   $2e^{\MAX} - K = 2(G - G_K) + K - 2$;
 \item the number of half edges still to be assigned and coming from
   marked points is $N - N_i - n_i$;
-\item we need $2p_1 - \tilde{N}_i - \tilde{n}_i$ half edges to
+\item we need $2p_1 - N^{(2)}_i - n^{(2)}_i$ half edges to
   stabilize the first $p_1$ vertices;
-\item if $g_i = 0$, we need $2(i+1) - \tilde{N}_i - \tilde{n}_i$ half
+\item if $g_i = 0$, we need $2(i+1) - N^{(2)}_i - n^{(2)}_i$ half
   edges to stabilize the first $i+1$ vertices, and we cannot use
   marked points.
 \end{itemize}
 
-The vector $n$ cannot be filled in a non-decreasing way because we
-have already fixed $g$. But whenever $g_i = g_{i-1}$ (i.e., when there
-is no division before $i$), we can impose the condition $n_i \geq
-n_{i-1}$. So
-\[
-n_i^{\min} =
-\begin{cases}
-  0 & \text{if there is a division before $i$}\\
-  n_{i-1} & \text{otherwise.}
-\end{cases}
-\]
-The upper endpoint is obtained in the following way:
+The following conditions limit the choices we have for $n_i$:
 \begin{itemize}
+\item if there is not a division before $i$ (that is, if $g_i =
+  g_{i-1}$), then we require $n_i \geq n_{i-1}$; otherwise, just $n_i
+  \geq 0$;
 \item we cannot assign more than $N$ marked points, hence (where we
   treat the case of $g_i = 0$ in a special way)
   \begin{align*}
@@ -361,37 +357,22 @@ The upper endpoint is obtained in the following way:
     \Rightarrow n_i &\leq N - N_i\\
     \Rightarrow (p_1 - i)n_i &\leq N - N_i\text{ if moreover $g_i = 0$.}
   \end{align*}
-\item if $g_i = 0$, in order to stabilize the $p_1$ vertices of genus
-  $0$, we need
+\item if $g_i = 0$, to stabilize the first $i+1$ curves we cannot use
+  marked points anymore, therefore we have
   \begin{align*}
-    2 p_1 - \tilde{N}_i - \tilde{n_i} &\leq (2(G - G_K) + K - 2) + (N - N_i - n_i)\\
-    \Rightarrow n_i - \min(2, n_i) = n_i - \tilde{n_i} &\leq (2(G - G_K) + K - 2) + (N - n_i) - (2 p_1 + \tilde{N}_i)\\
+    2 (i+1) - N^{(2)}_i - n^{(2)}_i &\leq (2(G - G_K) + K - 2)\\
+    \Rightarrow n^{(2)}_i = \min(2, n_i) &\geq - (2(G - G_K) + K - 2) + (2(i+1) - N^{(2)}_i)\\
     \Rightarrow
     &\begin{cases}
-      \text{impossible} & \text{if $\mathrm{RHS} < 0$}\\
-      n_i \leq 2+\mathrm{RHS} & \text{otherwise.}
+      \text{impossible} & \text{if $\mathrm{RHS} > 2$}\\
+      n_i \geq \mathrm{RHS} & \text{otherwise.}
     \end{cases}
   \end{align*}
 \end{itemize}
 
-Again, if $n_{i-1} < n_i$ we say that there is a division before
-$i$. Note that, even if it does not influence our definition of
-divisions, we may actually obtain a slightly better estimate for
-$n_i^{\min}$ if $g_i = 0$. Indeed, to stabilize the first $i+1$ curves
-we cannot use marked points anymore, therefore we have:
-\begin{align*}
-  2 (i+1) - \tilde{N}_i - \tilde{n}_i &\leq (2(G - G_K) + K - 2)\\
-  \Rightarrow \tilde{n}_i = \min(2, n_i) &\geq - (2(G - G_K) + K - 2) + (2(i+1) - \tilde{N}_i)\\
-  \Rightarrow
-  &\begin{cases}
-    \text{impossible} & \text{if $\mathrm{RHS} > 2$}\\
-    n_i \geq \mathrm{RHS} & \text{otherwise.}
-  \end{cases}
-\end{align*}
+\subsection{Range for $l_i$}
 
-\subsection{Endpoints for $l_i$}
-
-When deciding $l_i$, this is the situation:
+After deciding $l_i$, this is the situation:
 \begin{itemize}
 \item $e^{\MAX} = G - G_K - L_i - l_i + K - 1 \geq K-1$, and the
   maximum number of half edges coming from edges to assign is
@@ -401,17 +382,10 @@ When deciding $l_i$, this is the situation:
   G_K - L_i - l_i + K - 2$;
 \end{itemize}
 
-The lower endpoint for $l$ is computed in the same way as
-$n_i^{\min}$:
-\[
-l_i^{\min} =
-\begin{cases}
-  0 & \text{if there is a division before $i$}\\
-  l_{i-1} & \text{otherwise.}
-\end{cases}
-\]
-For the upper endpoint we use the following conditions:
+The conditions on $l_i$ are then the following:
 \begin{itemize}
+\item if there is not a division before $i$, then we require $l_i \geq
+  l_{i-1}$; otherwise, just $l_i \geq 0$;
 \item we need at least $K-1$ non-loop edges, hence
   \begin{align*}
     e^{\MAX} &\geq K-1\\
@@ -429,41 +403,66 @@ For the upper endpoint we use the following conditions:
     \end{aligned}\\
     &\qquad \Rightarrow l_i \leq G - G_k - L_i + K - 3 + n_z + 2l_z
   \end{align*}
+\item assume $g_i = 0$; if $l_i > 0$, we are adding to the $i$-th
+  vertex $2-n^{(2)}_i$ stabilizing half edges, and to stabilize the
+  $p_1$ genus $0$ vertices, we need to have
+  \begin{align*}
+    2 p_1 - N^{(2)} - (2-n^{(2)}_i) &\leq 2e^{\MAX} - K\\
+    &\Rightarrow 2p_1 - N^{(2)} - (2-n^{(2)}_i) \max(0, 2-m_i) \leq 2(G - G_K - L_i - l_i + K - 1) - K\\
+    &\Rightarrow 2l_i \leq 2(G - G_K - L_i) + K + N^{(2)} - n^{(2)}_i - 2p_i\,\text{.}
+  \end{align*}
+\item assume $g_i = 0$; after deciding $l_i$, we still have $e^{\MAX}$
+  edges to place, and each of them can contribute with one half edge
+  to the stabilization of the $i$-th vertex; moreover, one of that
+  half-edges is already counted toward the stabilization; hence
+  \begin{align*}
+    n_i + 2l_i + (e^{\MAX} - 1) &\geq 2\\
+    &\Rightarrow n_i + 2l_i + G - G_K - L_i - l_i + K - 1 - 1 \geq 2\\
+    &\Rightarrow l_i \geq 4 - n_i - G + G_K + L_i - K\,\text{.}
+  \end{align*}
 \end{itemize}
-If $l_i > l_{i-1}$, we add a division before $i$.
 
-\subsection{Endpoints for $a_{i,j}$}
+\subsection{Range for $a_{i,j}$}
 
-The lower endpoint for $a_{i,j}$ is
-\[
-a_{i,j}^{\min} =
-\begin{cases}
-  0 & \text{if there are divisions before $i$ and $j$}\\
-  a_{i,j-1} & \text{if there is a division before $i$ but not before
-    $j$}\\
-  a_{i-1,j} & \text{if there is a division before $j$ but not before
-    $i$}\\
-  \max\{a_{i,j-1}, a_{i-1,j}\} & \text{if there are no divisions
-    before $i$ or $j$.}
-\end{cases}
-\]
-The upper endpoint is
-\[
-a_{i,j}^{\MAX} = G - G_K - L_K - \max\{0, K - 2 + c\} + K - 1\,\text{.}
-\]
-We put a division before $i$ if $a_{i,j} > a_{i-1,j}$ and a division
-before $j$ if $a_{i,j} > a_{i,j-1}$.
+After deciding $a_{i,j}$, this is the situation:
+\begin{itemize}
+\item in this section, the word ``stabilized'' returns to its original
+  meaning, i.e., it means ``with at least $3$ half edges'', because
+  now we already placed some non-loop edge;
+\item $e^{\MAX} = G - G_K - L_K - A_{i,j} + K - 1$;
+\item we already placed edges between $c$ couples of different
+  vertices;
+\end{itemize}
 
-\subsection{Final testings}
 
-At the end of the $i$-th row of the matrix, we test that the $i$-th
-vertex is connected to at least another vertex. If $g_i$ equals zero
-we also check the stability of the $i$-th vertex.
-
-When the matrix is fully filled, we test that
-Condition~\ref{it:condition genus} holds, and that the graph is
-actually connected. If this is the case, we add the graph to the list,
-provided that it is not isomorphic to a previously found graph.
+Here are the conditions that $a_{i,j}$ must satisfy:
+\begin{itemize}
+\item if there is not a division before $i$, then we require $a_{i,j} \geq
+  a_{i-1,j}$; otherwise, just $a_{i,j} \geq 0$;
+\item if there is not a division before $j$, then we require $a_{i,j}
+  \geq a_{i,j-1}$;
+\item we need at least $K-2-c$ (if positive) edges to connect the
+  graph, because if $a_{i,j} > 0$, $c$ will increase by $1$ (this
+  estimate could be very poor, but enforcing the connectedness
+  condition in its entirety before completing the graph is too slow),
+  hence:
+  \begin{align*}
+    e^{\MAX} - a_{i,j} &\geq \max(0, K-2-c)\\
+    &\Rightarrow a_{i,j} \leq G - G_K - L_K - A_{i,j} +K - 1 - \max(0, K-2-c)\,\text{;}
+  \end{align*}
+\item $a_{i,j}$ contributes with at most $\max(0, 3-h_i) + \max(0,
+  3-h_j)$ stabilizing half edges; hence, to stabilize the $p_1$ genus
+  $0$ vertices, we need
+  \begin{align*}
+    3p_1 &- \sum_{g_{i^\prime} = 0} \min(3, n_i + 2l_i) - (\max(0, 3-h_i) + \max(0, 3-h_j)) \leq 2 (e^{\MAX} - a_{i,j})\\
+    &\Rightarrow 3p_1 - \sum_{g_{i^\prime} = 0} \min(3, n_i + 2l_i) - (\max(0, 3-h_i) + \max(0, 3-h_j)) &\leq 2 (G - G_K - L_K - A_{i,j} + K - 1 - a_{i,j})\\
+    &\Rightarrow 2a_{i,j} \leq 2 (G - G_K - L_K - A_{i,j} + K - 1) - 3p_1 + \sum_{g_{i^\prime} = 0} \min(3, n_i + 2l_i) + \max(0, 3-h_i) + \max(0, 3-h_j)\,\text{.}
+  \end{align*}
+\item if $j = K-1$ (that is, if this is the last chance to add half
+  edges to the $i$-th vertex, then we add enough edges from $i$ to
+  $K-1$ in order to stabilize it; moreover, if up to now we did not
+  place any non-loop edge on it, we impose $a_{i,K-1} > 0$.
+\end{itemize}
 
 
 
