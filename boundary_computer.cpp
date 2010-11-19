@@ -423,22 +423,21 @@ BoundaryComputer::bt_l(int i)
       end = min(end,
                 (graph.G-graph.sum) - 3 + graph.min_he_2);
 
-      // Stabilization half edges gained if l_i > 0
-      int stab_gained = max(2-graph.m[i],0);
-      if (!is_p1) stab_gained = 0;
-
-      // Consider the p1 genus 0 curves, after deciding l_i
-      // Max n. of edges: G-sum-l_i
-      // Max n. of stab. h/edges from edges: 2(G-sum-l_i)-K
-      // Max n. of stab. h/edges from marked points: 0
-      // H/edges needed to stabilize: 2p1-stab_he_2-stab_gained
-      // => 2p1-stab_he_2-stab_gained <= 2(G-sum-l_i)-K
-      // => 2l_i <= 2(G-sum) - K - 2p1 + stab_he_2 + stab_gained
-      end = min(end,
-                (2*(graph.G - graph.sum) - graph.K - 2*graph.p1 + graph.stab_he_2 + stab_gained)/2);
-
       if (is_p1)
         {
+          // Stabilization half edges gained if l_i > 0
+          int stab_gained = max(2-graph.m[i],0);
+
+          // Consider the p1 genus 0 curves, after deciding l_i
+          // Max n. of edges: G-sum-l_i
+          // Max n. of stab. h/edges from edges: 2(G-sum-l_i)-K
+          // Max n. of stab. h/edges from marked points: 0
+          // H/edges needed to stabilize: 2p1-stab_he_2-stab_gained
+          // => 2p1-stab_he_2-stab_gained <= 2(G-sum-l_i)-K
+          // => 2l_i <= 2(G-sum) - K - 2p1 + stab_he_2 + stab_gained
+          end = min(end,
+                    (2*(graph.G - graph.sum) - graph.K - 2*graph.p1 + graph.stab_he_2 + stab_gained)/2);
+
           // We have $2-min(2,m_i+2l_i)$ half edges to add to the curve
           // i. Note that the $G-sum-l_i$ edges to place cannot give 2
           // more stabilizing points to the i-th vertex because we
