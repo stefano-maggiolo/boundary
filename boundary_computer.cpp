@@ -349,20 +349,6 @@ BoundaryComputer::bt_m(int i)
           if (tmp > 2)
             return;
           start = max(start, tmp);
-
-          // Consider: the p1 genus 0 curves, after deciding m_i.
-          // Max n. of edges: G-sum
-          // Max n. of stab. h/edges from edges: 2(G-sum) - K
-          // Max n. of stab. h/edges from marked points: M-msum-m
-          // H/edges needed to stabilize: 2p1-stab_he_2-min(2,m_i)
-          // => 2p1-stab_he_2-min(2,m_i) <= 2((G-sum)-K + M-msum-m
-          // => m-min(2,m_i) <= 2(G-sum)-K + M-msum - (2p1-stab_he_2)$.
-          int lim_to_wasted = 2*(graph.G-graph.sum)-graph.K +
-            graph.M-graph.msum - (2*graph.p1-graph.stab_he_2);
-          if (lim_to_wasted < 0)
-            return;
-          else
-            end = min(end, 2+lim_to_wasted);
         }
       for (int n = start; n <= end; n++)
 		{
@@ -564,7 +550,8 @@ BoundaryComputer::bt_a(int i, int j)
       // => 3p1 - stab_he_3 <= G-sum-a_ij
       // => a_ij <= G-sum - 2p1 + stab_he_2
       int max_stab_gained = max(0, 3-graph.he[i]) + max(0, 3-graph.he[j]);
-      end = min(end, (2*(graph.G-graph.sum) - 3*graph.p1 + graph.stab_he_3 + max_stab_gained)/2);
+      end = min(end,
+                (2*(graph.G-graph.sum) - 3*graph.p1 + graph.stab_he_3 + max_stab_gained)/2);
 
       // We check the following, to ensure that the sum = G and
       // that all genus 0 curve are stabilized.
@@ -582,7 +569,6 @@ BoundaryComputer::bt_a(int i, int j)
                 start = max(start, 3 - graph.he[graph.K-1]);
               // The grand total has to be G.
               start = max(start, graph.G - graph.sum);
-              end = min(end, graph.G - graph.sum);
             }
           // A vertex has to be connected to at least one different
           // vertex.
