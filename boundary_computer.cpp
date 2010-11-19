@@ -251,18 +251,19 @@ BoundaryComputer::bt_g(int i)
       // condition of the form "we need at least ... to stabilize
       // ...", we mean:
 
-      // a. we split the edges in K-1 connection edges and the
-      //    remaining. Connection edges contribute to one
-      //    stabilization for every vertex, plus K-2 stabilization
-      //    that we can choose how to distribute; the remaining
-      //    $|E|-(K-1)$ edges give us 2 stabilization each, hence the
-      //    total number of stabilizations are $2(|E|-(K-1)) + K-2 =
-      //    2|E|-K$.
+      // a. we split the set of edges in two subsets: K-1 connection 
+      //    edges and the remaining ones. The connection edges 
+      //    contribute to one stabilization for every vertex, plus 
+      //    K-2 stabilizations that we can choose how to distribute. 
+      //    The remaining $|E|-(K-1)$ edges give us 2 stabilization 
+      //    each, hence the total number of stabilizations is:
+      //    $2(|E|-(K-1)) + K-2 = 2|E|-K$.
 
       // b. hence, before beginning to assign non-loop edges, we
       //    consider a genus 0 curve stabilized when it has 2
-      //    stabilization, because we know for certain that one more
-      //    will arrive to connect it to the rest of the graph.
+      //    stabilization, because we know for sure that one more
+      //    edge will  be assigned there in order to connect the 
+      //    vertex to the rest of the graph.
 
       // Consider: p1 genus 0 curves to stabilize, before deciding g_i.
       // Max n. of edges: (G-sum) - (K-i)g_i;
@@ -277,15 +278,16 @@ BoundaryComputer::bt_g(int i)
                  2*graph.p1) / (2*(graph.K-i)));
       for (int n = start; n <= end; n++)
         {
-          // We do the changes induced by g[i] = n.
+          // We make the changes induced by g[i] = n.
           graph.g[i] = n;
           if (n == 0)
             graph.p1++;
           else
             graph.sum += n;
-          // If we are increasing the genus with respect to the
-          // previous one, we cannote exchange anymore components < i
-          // with components >= i, so we put a division.
+          // If we are assigning a genus in this vertex that is strictly
+          // larger than the genus of the previous vertex, we cannote 
+          // exchange anymore components < i with components >= i, so we
+          // put a division before the vertex i.
           if (n > start) graph.divisions |= 1 << i;
 
           bt_g(i+1);
@@ -337,9 +339,9 @@ BoundaryComputer::bt_m(int i)
 
           // Consider the first i+1 genus 0 curves. We have stab_he_2
           // + min(m_i, 2) stabilizing half edges on them; the
-          // remaining stabilizations needed are 2(i+1) - stab_he_2 -
-          // min(m_i,2), so this amount has to be smaller or equal to
-          // the half edges we have: $2(G-sum) - K$; therefore we
+          // remaining needed stabilizations are $2(i+1) - stab_he_2 -
+          // min(m_i,2)$, so this number has to be smaller or equal to
+          // the number of half edges we have: $2(G-sum) - K$; therefore we
           // obtain $min(m,2) >= -(2(G-sum) - K) + 2(i+1) -
           // stab_he_2$. If the RHS is greater or equal than 2, the
           // inequality cannot be satisfied.
@@ -390,8 +392,8 @@ BoundaryComputer::bt_m(int i)
 	}
   else
     {
-      // If we decided all the marked points, we go to assign values
-      // to the diagonal of the adjacency matrix.
+      // If we decided all the marked points, we switch to assign
+      // values to the diagonal of the adjacency matrix.
 #ifdef DEBUG_GNL_COUNT
       count_gn[make_pair(vector<int>(graph.g,graph.g+graph.K), vector<int>(graph.m,graph.m+graph.K))] = 0;
 #endif
@@ -405,7 +407,7 @@ BoundaryComputer::bt_l(int i)
   if (i < graph.K) // We have to assign l[i].
     {
       bool is_p1 = i < graph.p1;
-      // We may permute i with the elements inside all the range
+      // We may permute the vertex i with the vertices inside the range
       // around i that does not meet divisions. In particular, if i is
       // not the first element after a division, we may assume to have
       // permuted the components in such a way that they are
@@ -416,7 +418,7 @@ BoundaryComputer::bt_l(int i)
 
       // Here, $sum = \sum g_j + \sum_{j<i} l_j - K + 1$, hence $G-sum
       // = l_i + \sum_{j>i} l_j + |E~|$, where $E~$ is the set of
-      // non-loop edges. Note that connecting edges are contained in
+      // non-loop edges. Note that the connecting edges are contained in
       // E~, hence $|E~| >= K-1$. Therefore, $l_i <= G-sum - (K-1)
 
       // After deciding l_i, we have $stab_he_2 + min(2,m_i+2l_i)$
@@ -451,10 +453,10 @@ BoundaryComputer::bt_l(int i)
 
       if (is_p1)
         {
-          // We have $2-min(2,m_i+2l_i)$ half edges to add to curve
+          // We have $2-min(2,m_i+2l_i)$ half edges to add to the curve
           // i. Note that the $G-sum-l_i$ edges to place cannot give 2
-          // stabilizing points anymore to the i curve because we
-          // already decided its loops. Hence, the maximum number of
+          // more stabilizing points to the i-th vertex because we
+          // have already decided its loops. Hence, the maximum number of
           // stabilizing half edges for i is $G-sum-l_i-(K-1) + K-2 =
           // G-sum-l_i-1$. Therefore, we need to ensure that $m + 2l_i
           // + G-sum-l_i-1 >= 2$.
@@ -462,7 +464,7 @@ BoundaryComputer::bt_l(int i)
         }
       for (int n = start; n <= end; n++)
         {
-          // We do the changes induced by l[i] = n.
+          // We make the changes induced by l[i] = n.
           graph.l[i] = n;
           graph.a[i][i] = n;
           unsigned int tmp;
@@ -505,7 +507,7 @@ BoundaryComputer::bt_l(int i)
             }
         }
     }
-  else // If we decided all diagonal elements, we go to assign values
+  else // If we decided all the diagonal elements, we can now assign values
        // to the rest of the upper triangle of the matrix, row by row,
        // from left to right.
     {
@@ -527,7 +529,7 @@ BoundaryComputer::bt_l(int i)
 void
 BoundaryComputer::bt_a(int i, int j)
 {
-  if (j >= graph.K) // We do the carrying by hand.
+  if (j >= graph.K) // We make the carrying by hand.
     {
       i++;
       j = i+1;
@@ -539,19 +541,19 @@ BoundaryComputer::bt_a(int i, int j)
       bool is_j_p1 = j < graph.p1;
 
       // If i is not the first element in its non-divisions range,
-      // then we can assume it is not less then the element in the
+      // then we can assume it is not less than the element in the
       // previous row.
       int start_i = (graph.divisions & (1 << i))? 0: graph.a[i-1][j];
       // Also, if j is not the first element in its non-divisions
-      // range, than we can assume it is not less than the element in
+      // range, then we can assume it is not less than the element in
       // the previous column.
       int start_j = 0;
       if (j > i+1 && !(graph.divisions & (1 << j))) start_j = graph.a[i][j-1];
       int start = max(start_i, start_j);
 
-      // Sure a[i][j] cannot exceed G-sum; but if we put c connections
-      // up to now, sure we will have to put at least other K-2-c
-      // edges to connect the graph.
+      // Sure a[i][j] cannot exceed G-sum; but if we have put c connections
+      // so far, certainly we will have to put at least K-2-c edges
+      // more in order to connect the graph.
       int end = graph.G - graph.sum - max(0, graph.K-2-graph.connections);
 
       // Consider the first p1 genus 0 curves, after deciding a_ij
@@ -568,8 +570,8 @@ BoundaryComputer::bt_a(int i, int j)
       // that all genus 0 curve are stabilized.
       if (j == graph.K-1)
         {
-          // If this is the last chance to add edge to a genus 0
-          // curve, we add enough to stabilize it.
+          // If this is the last chance to add edges to a genus 0
+          // curve, we add enough edges to stabilize it.
           if (is_i_p1)
             start = max(start, 3 - graph.he[i]);
           // If we're finishing...
@@ -582,8 +584,8 @@ BoundaryComputer::bt_a(int i, int j)
               start = max(start, graph.G - graph.sum);
               end = min(end, graph.G - graph.sum);
             }
-          // A curve has to be connected to at least one different
-          // curve.
+          // A vertex has to be connected to at least one different
+          // vertex.
           if (graph.he[i] == graph.m[i]+2*graph.l[i])
             start = max(start, 1);
           else if (i == graph.K-2 && graph.he[graph.K-1] == graph.m[graph.K-1] + 2*graph.l[graph.K-1])
@@ -641,8 +643,8 @@ BoundaryComputer::bt_a(int i, int j)
             }
         }
     }
-  else // If we decided all the matrix, we check if the graph is
-       // acceptable. In case, we print it.
+  else // If we have already decided all the matrix, we check if the 
+       // graph is acceptable. In this case, we print it.
     {
       graph.total_edges = -graph.M;
       for (int q = 0; q < graph.K; q++)
@@ -651,9 +653,9 @@ BoundaryComputer::bt_a(int i, int j)
       if (computeOnlyCodim == -1 ||
           graph.total_edges == computeOnlyCodim)
         {
-          // Note: we could also compute all canonical labelling
+          // Note: we could also compute all the canonical labellings
           // whether or not we'll use it: for example, for (6,0) there
-          // are just ~700 graphs for which the canonical labelling
+          // are only ~700 graphs for which the canonical labelling
           // won't be used, but they are with K = 3.
           graph.nautyK = -1;
 
