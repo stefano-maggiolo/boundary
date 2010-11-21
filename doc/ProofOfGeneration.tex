@@ -47,7 +47,7 @@
   available at \href{http://people.sissa.it/~maggiolo/strata/}
   {\texttt{http://people.sissa.it/\~{}maggiolo/strata/}}. Given two
   natural numbers $g$ and $n$ satisfying $2g+n-2>0$, the program
-  generates all genus $g$ stable graphs with $n$ half-edges. Each such
+  generates all genus $g$ stable graphs with $n$ marked points. Each such
   graph determines the topological type of a nodal stable curve of
   arithmetic genus $g$ with $n$ marked points. Our motivation comes
   from the fact that the boundary of the moduli space of stable genus
@@ -136,10 +136,17 @@ K-1\}$. Let $\Sigma_K$ be the symmetric group on the set $\ubar{K}$.
   \item Its \emph{total number of marked points}, defined as $\sum_{v
       \in V} n_v$, equals $N$.
   \item \label{it:condition stability} Stability condition: $\deg v +
-    n_v \geq 3$ for every vertex $v$ with $g_v = 0$ (in other words,
-    $v$ must have at least $3$ \emph{half edges\/}).
+    n_v \geq 3$ for every vertex $v$ with $g_v = 0$ %(in other words,
+    %$v$ must have at least $3$ \emph{half edges\/}).
   \end{enumerate}
 \end{definition}
+
+\begin{notation} We will call \emph{half edge} associated to a vertex $v$
+either a marked point on $v$ or half of an edge that connects $v$ to an
+other vertex. In this way stability condition can be rephrased in: for 
+every vertex $v$ of genus $0$ there are at least $3$ half edges on it.
+An half edge is said to come from an edge if it is of the second type.
+\end{notation}
 
 Two stable graphs $\graph = (V, E, g, n)$ and $\graph^\prime =
 (V^\prime, E^\prime, g^\prime, n^\prime)$ are \emph{isomorphic\/} if
@@ -160,7 +167,8 @@ Our task is to generate one stable graph for each isomorphism class.
 
 \section{How the program generates graphs}
 
-Let us introduce the notation we use in the program.
+ In this section we describe the general ideas of our algorithm.
+ Let us first introduce the notation we use in the program.
 
 \begin{notation}\label{not:gnla}
   The set of vertices $V$ will always be $\ubar{K}$, so that vertices
@@ -177,8 +185,9 @@ Let us introduce the notation we use in the program.
 \begin{remark}
   In the following, we assume $\abs{V} > 1$ in order not to deal with
   special cases. There are trivially $G+1$ stable graphs of type $(G,
-  N)$ with one vertex, depending on the number of self intersection of
-  the single irreducible component.
+  N)$ with one vertex. Indeed, if there is one vertex, the choice of the genus  
+  uniquely determines the number of loops on it after Definition 
+  \ref{def:stable graph}.
 \end{remark}
 
 The program uses recursive functions to generate the data that
@@ -208,56 +217,84 @@ Therefore, the program fills the data in the order
   & \qquad \qquad \qquad \qquad \qquad \qquad a_{0,1}, \dots, a_{0,
     K-1}, a_{1, 2}, \dots, a_{1, K-1}, \dots, a_{K-2, K-1}\text{.}
 \end{align*}
-It fills each of these positions with an integer in a specific range
-that we are going to describe in Section~\ref{sec:ranges}. For each of
-these attempts, it recursively continues to fill the data until
-everything is fixed and the graph is checked to be a stable graph and
-not isomorphic to a graph already generated.
+
+It is enough to generate the strict upper triangle of the matrix $a$ because the
+matrix is symmetric, and the diagonal elements have already been generated in the 
+vector $l$.
+ 
+Every single datum is assigned trying all the possibilities within a range
+that depends upon the values $G,N$, and upon the values of the data that have
+already been filled.
+ %Each entry of the matrix $M$ is filled with an integer in a specific range that we are going to describe in Section~\ref{sec:ranges}. For each of
+%these attempts, it recursively continues to fill the data until
+%everything is fixed and the graph is checked to be a stable graph and
+%not isomorphic to a graph already generated.
 
 % TODO explain better that division is a way to enforce lexicographic
 % order on g,n,l,a (scanned horizontally and vertically)
-The main ingredient to decide the lower endpoint is the concept of
-\emph{division\/} before an index $i$. Basically, having a division
-before $i$ means that within the data we have already decided, we have
-that a value relative to the index $i$ is strictly bigger than a value
-relative to the index $i-1$. Hence, if we have a division before $i$,
-we allow the data relative to the index $i$ to start from $0$;
-otherwise, it can only start from the value assigned to the index
-$i-1$ (i.e., the datum we are deciding must be non decreasing at the
-index $i$).
 
-\begin{remark}
-  We choose the ranges for the data $g$, $n$, and $l$, in such a way
-  that for any data $(g, n, l)$ the program generates, there is at
-  least one choice for the matrix $a$ that gives a stable graph.
+The main ingredient to decide the lower endpoint of the range
+is the concept of \emph{division\/} before an index $i$. 
+We start filling the genus vector $g$ in a non decreasing way: every time we
+assign a value $g_i$ strictly greater than $g_{i-1}$ we put a division before $i$.
+Then we start filling the vector $n$ in such a way that, within two division ranges,
+it is non decreasing. Again we introduce a division before $i$ every time
+we assign a value $n_i$ strictly bigger than $n_{i-1}$. We follow this procedure
+also for the vector $l$. Finally, we start filling the rows of the matrix $a$.
 
-  % TODO: fix this
-  This is so because the endpoints for the ranges are computed
-  thinking of the worst possible stable graph (that is, the one with
-  the least number of half edges, to stabilize genus $0$ vertices, and
-  the least number of edges, to connect the graph). Hence, at least
-  this worst case is stable and with those data.
-\end{remark}
+The value of $a_{i,j}$ is assigned starting from:
+$$
+\begin{cases}
+  0 & \text{if there are divisions before $i$ and $j$}\\
+  a_{i,j-1} & \text{if there is a division before $i$ but not before
+    $j$}\\
+  a_{i-1,j} & \text{if there is a division before $j$ but not before
+    $i$}\\
+  \max\{a_{i,j-1}, a_{i-1,j}\} & \text{if there are no divisions
+    before $i$ or $j$.}
+\end{cases}
+$$
+We put a division before $i$ if $a_{i,j} > a_{i-1,j}$ and a division
+before $j$ if $a_{i,j} > a_{i,j-1}$.
 
-At the end of the $i$-th row of the matrix, we test that the $i$-th
-vertex is connected to at least another vertex. If $g_i$ equals zero
-we also check the stability of the $i$-th vertex.
+Once the divisions are fixed, for each datum we fix the range of possibilities
+within it can vary. The range we introduce for each element to be chosen is
+more refined than the one induced by the divisions, and it is explained in the 
+following section. For each datum to be filled, the range depends upon $G$, $N$
+and the data that have already been filled. The ranges are defined in such a way
+that the conditions of Definition \ref{def:stable graph} are checked as early 
+as possible.
 
-When the matrix is fully filled, we test that
-Condition~\ref{it:condition genus} holds, and that the graph is
-actually connected. If this is the case, we add the graph to the list,
-provided that it is not isomorphic to a previously found graph.
+%Finally, at the end of the $i$-th row of the matrix, we test that the $i$-th
+%vertex is connected to at least another vertex. If $g_i$ equals zero
+%we also check the stability of the $i$-th vertex.
 
+Finally, when all data are fully filled, we test that all the
+conditions of Definition \ref{def:stable graph} hold, in particular 
+that the graph is actually connected. Then we use the program Nauty \cite{nauty} 
+to check if this graph is isomorphic to a previously generated graph.
+If this is the case, we add the graph to the list of graphs of genus $G$
+with $N$ marked points.
 
-
+%sembrerebbe che se invece di usare il nostro programma e nauty
+%in serie, i due fossero ottimizzati l'uno per l'altro si otterrebbero risultati 
+%molto migliori?
 \section{Description of the ranges}\label{sec:ranges}
+
+In the previous section we have introduced the algorithm, by describing the
+divisions. In this section we introduce accurate ranges for the possible values
+of $g,n,l$ and $a$. In particular we try to obtain estimates on the upper 
+extremum for each datum to be filled.
 
 \begin{notation}
   At any time during the algorithm, we let $e^{\MAX}$ be the maximum
   number of edges that could be placed after that time, and $c$ be the
   number of couples of (different) vertices already connected by an
   edge. We let $p_1$ be the number of vertices $i$ to which the
-  algorithm has assigned $g_i = 0$;
+  algorithm has assigned $g_i = 0$. Note that the final value of $p_1$ 
+  is determined when the first genus greater than $0$ is assigned, in 
+  particular the final value of $p_1$ is determined at the end of the
+  assignment of the values to the vector $g$. 
 \end{notation}
 
 \begin{notation}
@@ -266,10 +303,11 @@ provided that it is not isomorphic to a previously found graph.
   $i$-th vertex. This is justified by the fact that we know that at
   least one half edge will be assigned to the $i$-th vertex to connect
   it to the rest of the graph. Hence, whenever $g_i = 0$, $n^{(2)}_i$
-  represent the number of \emph{stabilizing\/} half edges, in the
-  sense that they are not useless for the aim of stabilizing the
-  curve. When deciding $a_{i,j}$, it is also useful to have defined
-  $h_i$, the total number of half edges hitting the $i$-th
+  is the number of \emph{stabilizing\/} half edges at the vertex $i$: 
+  one half edge is needed to connect the vertex to the rest of the graph, 
+  and then at least two more half edges are needed to stabilize the
+  vertex. When deciding $a_{i,j}$, it is also useful to have defined
+  $h_i$, the total number of half edges that hit the $i$-th
   vertex. Finally, we define
   \begin{align*}
     G_i &\coloneqq \sum_{i^\prime < i} g_{i^\prime}\,\text{,} &
@@ -282,6 +320,12 @@ provided that it is not isomorphic to a previously found graph.
 \end{notation}
 
 We are now ready to describe the ranges in which the data can vary.
+We study subsequently the cases of $g$, $n$, $l$ and $a$, thus 
+following the order of the recursions of our algorithm. Each range is 
+described by presenting a first list of general constraints on the
+parameters and then by presenting a second list containing the extimates
+that allow the definitions of the actual ranges.
+
 
 \subsection{Range for $g_i$}
 
@@ -295,8 +339,8 @@ following situation:
   to send the other $K-2$ half edges; conversely, the $2(e^{\MAX} - K
   +1)$ half edges of the remaining edges can be associated to any
   vertex; therefore, the maximum number of half edges coming from
-  edges (not counting the one to connect the graph) is $2e^{\MAX} - K
-  = 2(G - G_i) + K - 2$;
+  edges (not counting those that are needed to connect the graph) 
+  is $2e^{\MAX} - K = 2(G - G_i) + K - 2$;
 \item the maximum number of half edges coming from marked points is
   $N$;
 \item we need $2p_1$ half edges to stabilize the genus $0$ vertices,
@@ -305,7 +349,7 @@ following situation:
 
 We use the following conditions to limit the choices we have for
 $g_i$:
-\begin{itemize}
+\begin{enumerate}
 \item since $g$ is the first vector to be generated, there is no
   division before $i$, hence
   \[
@@ -325,9 +369,9 @@ $g_i$:
   \begin{align*}
     &2 p_1 \leq 2e^{\MAX} - K + N\\
     &\qquad\Rightarrow 2p_1 \leq G - G_i - (K-i)g_i - K + N\\
-    &\qquad\Rightarrow (K-i)g_i \leq G - G_i - K + N - 2p_i\,\text{.}
+    &\qquad\Rightarrow (K-i)g_i \leq G - G_i - K + N - 2p_1\,\text{.}
   \end{align*}
-\end{itemize}
+\end{enumerate}
 
 \subsection{Range for $n_i$}
 
@@ -345,8 +389,10 @@ When deciding $n_i$, we have the following situation:
   marked points.
 \end{itemize}
 
-The following conditions limit the choices we have for $n_i$:
-\begin{itemize}
+The following conditions define then the ranges for the possible choices 
+for $n_i$:
+
+\begin{enumerate}
 \item if there is not a division before $i$ (that is, if $g_i =
   g_{i-1}$), then we require $n_i \geq n_{i-1}$; otherwise, just $n_i
   \geq 0$;
@@ -357,8 +403,8 @@ The following conditions limit the choices we have for $n_i$:
     &\qquad\Rightarrow n_i \leq N - N_i\\
     &\qquad\Rightarrow (p_1 - i)n_i \leq N - N_i\text{ if moreover $g_i = 0$.}
   \end{align*}
-\item if $g_i = 0$, to stabilize the first $i+1$ curves we cannot use
-  marked points anymore, therefore we have
+\item if $g_i = 0$, for the purpose of stabilizing the first $i+1$ curves 
+  we cannot use marked points anymore, therefore we have
   \begin{align*}
     &2 (i+1) - N^{(2)}_i - n^{(2)}_i \leq (2(G - G_K) + K - 2)\\
     &\qquad\Rightarrow n^{(2)}_i = \min(2, n_i) \geq - (2(G - G_K) + K - 2) + (2(i+1) - N^{(2)}_i)\\
@@ -368,7 +414,7 @@ The following conditions limit the choices we have for $n_i$:
       n_i \geq \mathrm{RHS} & \text{otherwise.}
     \end{cases}
   \end{align*}
-\end{itemize}
+\end{enumerate}
 
 \subsection{Range for $l_i$}
 
@@ -380,7 +426,7 @@ After deciding $l_i$, this is the situation:
 \end{itemize}
 
 The conditions on $l_i$ are then the following:
-\begin{itemize}
+\begin{enumerate}
 \item if there is not a division before $i$, then we require $l_i \geq
   l_{i-1}$; otherwise, just $l_i \geq 0$;
 \item we need at least $K-1$ non-loop edges, hence
@@ -396,6 +442,10 @@ The conditions on $l_i$ are then the following:
   \begin{align*}
     &\max(0, 2-n_z-2l_z) \leq G - G_K - L_i - l_i + K - 1\\
     &\qquad\Rightarrow l_i \leq G - G_k - L_i + K - 3 + n_z + 2l_z
+    %Qui togliendo il massimo sembrerebbe che si ottenga una condizione piu' debole
+    %per l_i. Come mai non richiediamo piu' la condizione piu' forte nel secondo 
+    %passaggio? sono in realte' uguali le due condizioni con e senza massimo?
+    %Ho capito: il RHS della prima disuguaglianza è sempre maggiore o uguale a zero.
   \end{align*}
 \item assume $g_i = 0$; if $l_i > 0$, we are adding to the $i$-th
   vertex $2-n^{(2)}_i$ stabilizing half edges, and to stabilize the
@@ -414,23 +464,27 @@ The conditions on $l_i$ are then the following:
     &\qquad\Rightarrow n_i + 2l_i + G - G_K - L_i - l_i + K - 1 - 1 \geq 2\\
     &\qquad\Rightarrow l_i \geq 4 - n_i - G + G_K + L_i - K\,\text{.}
   \end{align*}
-\end{itemize}
+\end{enumerate}
 
 \subsection{Range for $a_{i,j}$}
 
 After deciding $a_{i,j}$, this is the situation:
 \begin{itemize}
-\item in this section, the word ``stabilized'' returns to its original
+\item in this section, the word ``stabilized'' goes back to its original
   meaning, i.e., it means ``with at least $3$ half edges'', because
-  now we already placed some non-loop edge;
+  now we have already placed some non-loop edge;
+  %Vuoi dire che fino ad ora stabile significava che c'erano 2 half edges
+  %mentre ora ritornano ad essere 3? Se e' così non capisco il because nella 
+  %frase precedente.
+  
 \item $e^{\MAX} = G - G_K - L_K - A_{i,j} + K - 1$;
-\item we already placed edges between $c$ couples of different
+\item we have already placed edges between $c$ couples of different
   vertices;
 \end{itemize}
 
 
-Here are the conditions that $a_{i,j}$ must satisfy:
-\begin{itemize}
+Here are the constraints that $a_{i,j}$ must satisfy:
+\begin{enumerate}
 \item if there is not a division before $i$, then we require $a_{i,j} \geq
   a_{i-1,j}$; otherwise, just $a_{i,j} \geq 0$;
 \item if there is not a division before $j$, then we require $a_{i,j}
@@ -440,6 +494,7 @@ Here are the conditions that $a_{i,j}$ must satisfy:
   estimate could be very poor, but enforcing the connectedness
   condition in its entirety before completing the graph is too slow),
   hence:
+  %Qui non capisco: devo rileggere la mail che mi hai mandato.
   \begin{align*}
     &e^{\MAX} - a_{i,j} \geq \max(0, K-2-c)\\
     &\qquad\Rightarrow a_{i,j} \leq G - G_K - L_K - A_{i,j} +K - 1 - \max(0, K-2-c)\,\text{;}
@@ -455,10 +510,10 @@ Here are the conditions that $a_{i,j}$ must satisfy:
     &\qquad\qquad\qquad +\sum_{g_{i^\prime} = 0} \min(3, n_i + 2l_i) + \max(0, 3-h_i) + \max(0, 3-h_j)\,\text{.}
   \end{align*}
 \item if $j = K-1$ (that is, if this is the last chance to add half
-  edges to the $i$-th vertex, then we add enough edges from $i$ to
+  edges to the $i$-th vertex), then we add enough edges from $i$ to
   $K-1$ in order to stabilize it; moreover, if up to now we did not
   place any non-loop edge on it, we impose $a_{i,K-1} > 0$.
-\end{itemize}
+\end{enumerate}
 
 
 
@@ -473,21 +528,31 @@ We want to prove the following result.
 
 From now on, we fix the number of vertices $K$, and focus on proving
 that the algorithm generates at least one graph for every isomorphism
-class of graphs with $K$ vertices. The conditions of stability and of connectedness of the graph generated by the algorithm are checked separatedly so they are not really relevant in this section.
+class of graphs with $K$ vertices. The conditions of stability and of 
+connectedness of the graph generated by the algorithm are checked 
+separatedly so they are not really relevant in this section.
+%Se e' vero quello che dico nel paragrafo successivo, va spiegato
+%meglio di come l'ho fatto.
+Moreover, as a consequence of the fact that our ranges for $g$,$n$,$l$ 
+and $a$ are correct, we have that it is enough to prove the proposition
+above in the case of an algorithm that works only with the ranges defined 
+by divisions.
 
-  . %They were relevant in the previous section, as our recursive way of generating graphs incorporates the check at every stage of the recursion, in order to minimize
+
+
+  %. They were relevant in the previous section, as our recursive way of generating graphs incorporates the check at every stage of the recursion, in order to minimize
 
 \begin{notation}
   We have seen previously that we can encode the data of a stable
   graph in a quadruple $G \coloneqq (g, n, l, a)$. We denote by
   $\mathcal{M}$ the set of all quadruples generated by the algorithm
   described in the previous section, and by $\mathcal{A}$ the set of
-  all quadruples encoding a stable graph.
+  all quadruples that define a stable graph.
 \end{notation}
 
-Since the program check that each generated graph is stable, we have
-the inclusion $\mathcal{M} \subset \mathcal{A}$; hence, to prove
-Proposition~\ref{prop:main} is equivalent to prove that every $G \in
+Since our program only generates stable graphs, we have
+the inclusion $\mathcal{M} \subset \mathcal{A}$; hence, in order to prove
+Proposition~\ref{prop:main}, it is equivalent to prove that every $G \in
 \mathcal{A}$ is in $\mathcal{M}$ up to applying a permutation of
 $\ubar{K}$. The key point is to give two characterizations
 (Lemma~\ref{lemma:char1} and~\ref{lemma:char2}) of the property of
@@ -808,9 +873,9 @@ arguing as in the following example.
   The iteration of this process comes to an end (that is, we arrive to
   a matrix in $\mathcal{M}$) since the set
   \[
-  \bigl\{ \sigma G \mid \sigma \in \Sigma_K\bigr\}\text{.}\qedhere
+  \bigl\{ \sigma G \mid \sigma \in \Sigma_K\bigr\}
   \]
-  is finite
+  is finite.
 \end{proof}
 
 % TODO: write a new section with some data obtained by the program,
