@@ -300,101 +300,6 @@ of graphs of genus $G$ with $N$ marked points.
 
 
 
-\section{Description of the ranges}\label{sec:ranges}
-
-In the previous section we have introduced the algorithm, by
-describing the divisions. In this section we introduce accurate ranges
-for the possible values of $g,n,l$ and $a$. In particular we try to
-obtain estimates on the upper extremum for each datum to be filled.
-
-\begin{notation}
-  At any time during the algorithm, we let $e^{\MAX}$ be the maximum
-  number of edges that could be placed after that time, and $c$ be the
-  number of couples of (different) vertices already connected by an
-  edge. We let $p_1$ be the number of vertices $i$ to which the
-  algorithm has assigned $g_i = 0$. Note that the final value of $p_1$
-  is determined when the first genus greater than $0$ is assigned, in
-  particular the final value of $p_1$ is determined at the end of the
-  assignment of the values to the vector $g$.
-\end{notation}
-
-\begin{notation}
-  When deciding $g$, $n$, or $l$, we let $n^{(2)}_i$ be the minimum
-  between $2$ and the number of half edges already assigned to the
-  $i$-th vertex. This is justified by the fact that we know that at
-  least one half edge will be assigned to the $i$-th vertex to connect
-  it to the rest of the graph. Hence, whenever $g_i = 0$, $n^{(2)}_i$
-  is the number of \emph{stabilizing\/} half edges at the vertex $i$:
-  one half edge is needed to connect the vertex to the rest of the graph,
-  and then at least two more half edges are needed to stabilize the
-  vertex. When deciding $a_{i,j}$, it is also useful to have defined
-  $h_i$, the total number of half edges that hit the $i$-th
-  vertex. Finally, we define
-  \begin{align*}
-    G_i &\coloneqq \sum_{i^\prime < i} g_{i^\prime}\,\text{,} &
-    N_i &\coloneqq \sum_{\substack{i^\prime < i\\g_{i^\prime} = 0}} n_{i^\prime}\,\text{,}\\
-    N^{(2)} &\coloneqq \sum_{g_{i^\prime} = 0} n^{(2)}_{i^\prime}\,\text{,} &
-    N^{(2)}_i &\coloneqq \sum_{\substack{i^\prime < i\\g_{i^\prime} = 0}} n^{(2)}_{i^\prime}\,\text{;}\\
-    L_i &\coloneqq \sum_{i^\prime < i} l_{i^\prime}\,\text{,} &
-    A_{i,j} &\coloneqq \sum_{\mathclap{i^\prime < i \vee j^\prime < j}} a_{i^\prime, j^\prime}\,\text{.}
-  \end{align*}
-\end{notation}
-
-We are now ready to describe the ranges in which the data can vary.
-We study subsequently the cases of $g$, $n$, $l$ and $a$, thus
-following the order of the recursions of our algorithm. Each range is
-described by presenting a first list of general constraints on the
-parameters and then by presenting a second list containing the
-extimates that allow the definitions of the actual ranges.
-
-
-\subsection{Range for $g_i$}
-
-When the algorithm is deciding the value of $g_i$, we have the
-following situation:
-\begin{itemize}
-\item $e^{\MAX} = G - G_i + K - 1$ by Condition~\ref{it:condition genus};
-\item amongst the $e^{\MAX}$ edges, there are necessarily $K-1$
-  non-loop edges (to connect the graph); these $K-1$ edges give one
-  half edge for each vertex, whereas we can choose arbitrarily where
-  to send the other $K-2$ half edges; conversely, the $2(e^{\MAX} - K
-  +1)$ half edges of the remaining edges can be associated to any
-  vertex; therefore, the maximum number of half edges coming from
-  edges (not counting those that are needed to connect the graph) is
-  $2e^{\MAX} - K = 2(G - G_i) + K - 2$;
-\item the maximum number of half edges coming from marked points is
-  $N$;
-\item we need $2p_1$ half edges to stabilize the genus $0$ vertices,
-  since one half edge comes for free from the connection of the graph.
-\end{itemize}
-
-We use the following conditions to limit the choices we have for
-$g_i$:
-\begin{enumerate}
-\item since $g$ is the first vector to be generated, there is no
-  division before $i$, hence
-  \[
-  g_i \geq g_{i-1}\text{;}
-  \]
-  remember that $g_j = 0$ whenever $j \not\in \ubar{K}$;
-\item we need at least $K-1$ non-loop edges, hence (using the fact
-  that $\sum_{j \geq i} g_j \geq (K-i) g_i$)
-  \begin{align*}
-    &e^{\MAX} \geq K-1\\
-    &\qquad\Rightarrow G - G_i - (K-i) g_i + K-1 \geq K-1\\
-    &\qquad\Rightarrow (K-i)g_i \leq G - G_i\,\text{;}
-  \end{align*}
-\item in order to stabilize the $p_1$ vertices of genus $0$ (using the
-  fact that one stabilizing half edge comes for free by connection) we
-  must have
-  \begin{align*}
-    &2 p_1 \leq 2e^{\MAX} - K + N\\
-    &\qquad\Rightarrow 2p_1 \leq G - G_i - (K-i)g_i - K + N\\
-    &\qquad\Rightarrow (K-i)g_i \leq G - G_i - K + N - 2p_1\,\text{.}
-  \end{align*}
-\end{enumerate}
-
-
 
 \section{The program generates all graphs}\label{sec:proof}
 
@@ -755,6 +660,101 @@ arguing as in the following example.
   \]
   is finite.
 \end{proof}
+\section{Description of the ranges}\label{sec:ranges}
+
+In the previous section we have introduced the algorithm, by
+describing the divisions. In this section we introduce accurate ranges
+for the possible values of $g,n,l$ and $a$. In particular we try to
+obtain estimates on the upper extremum for each datum to be filled.
+
+\begin{notation}
+  At any time during the algorithm, we let $e^{\MAX}$ be the maximum
+  number of edges that could be placed after that time, and $c$ be the
+  number of couples of (different) vertices already connected by an
+  edge. We let $p_1$ be the number of vertices $i$ to which the
+  algorithm has assigned $g_i = 0$. Note that the final value of $p_1$
+  is determined when the first genus greater than $0$ is assigned, in
+  particular the final value of $p_1$ is determined at the end of the
+  assignment of the values to the vector $g$.
+\end{notation}
+
+\begin{notation}
+  When deciding $g$, $n$, or $l$, we let $n^{(2)}_i$ be the minimum
+  between $2$ and the number of half edges already assigned to the
+  $i$-th vertex. This is justified by the fact that we know that at
+  least one half edge will be assigned to the $i$-th vertex to connect
+  it to the rest of the graph. Hence, whenever $g_i = 0$, $n^{(2)}_i$
+  is the number of \emph{stabilizing\/} half edges at the vertex $i$:
+  one half edge is needed to connect the vertex to the rest of the graph,
+  and then at least two more half edges are needed to stabilize the
+  vertex. When deciding $a_{i,j}$, it is also useful to have defined
+  $h_i$, the total number of half edges that hit the $i$-th
+  vertex. Finally, we define
+  \begin{align*}
+    G_i &\coloneqq \sum_{i^\prime < i} g_{i^\prime}\,\text{,} &
+    N_i &\coloneqq \sum_{\substack{i^\prime < i\\g_{i^\prime} = 0}} n_{i^\prime}\,\text{,}\\
+    N^{(2)} &\coloneqq \sum_{g_{i^\prime} = 0} n^{(2)}_{i^\prime}\,\text{,} &
+    N^{(2)}_i &\coloneqq \sum_{\substack{i^\prime < i\\g_{i^\prime} = 0}} n^{(2)}_{i^\prime}\,\text{;}\\
+    L_i &\coloneqq \sum_{i^\prime < i} l_{i^\prime}\,\text{,} &
+    A_{i,j} &\coloneqq \sum_{\mathclap{i^\prime < i \vee j^\prime < j}} a_{i^\prime, j^\prime}\,\text{.}
+  \end{align*}
+\end{notation}
+
+We are now ready to describe the ranges in which the data can vary.
+We study subsequently the cases of $g$, $n$, $l$ and $a$, thus
+following the order of the recursions of our algorithm. Each range is
+described by presenting a first list of general constraints on the
+parameters and then by presenting a second list containing the
+extimates that allow the definitions of the actual ranges.
+
+
+\subsection{Range for $g_i$}
+
+When the algorithm is deciding the value of $g_i$, we have the
+following situation:
+\begin{itemize}
+\item $e^{\MAX} = G - G_i + K - 1$ by Condition~\ref{it:condition genus};
+\item amongst the $e^{\MAX}$ edges, there are necessarily $K-1$
+  non-loop edges (to connect the graph); these $K-1$ edges give one
+  half edge for each vertex, whereas we can choose arbitrarily where
+  to send the other $K-2$ half edges; conversely, the $2(e^{\MAX} - K
+  +1)$ half edges of the remaining edges can be associated to any
+  vertex; therefore, the maximum number of half edges coming from
+  edges (not counting those that are needed to connect the graph) is
+  $2e^{\MAX} - K = 2(G - G_i) + K - 2$;
+\item the maximum number of half edges coming from marked points is
+  $N$;
+\item we need $2p_1$ half edges to stabilize the genus $0$ vertices,
+  since one half edge comes for free from the connection of the graph.
+\end{itemize}
+
+We use the following conditions to limit the choices we have for
+$g_i$:
+\begin{enumerate}
+\item since $g$ is the first vector to be generated, there is no
+  division before $i$, hence
+  \[
+  g_i \geq g_{i-1}\text{;}
+  \]
+  remember that $g_j = 0$ whenever $j \not\in \ubar{K}$;
+\item we need at least $K-1$ non-loop edges, hence (using the fact
+  that $\sum_{j \geq i} g_j \geq (K-i) g_i$)
+  \begin{align*}
+    &e^{\MAX} \geq K-1\\
+    &\qquad\Rightarrow G - G_i - (K-i) g_i + K-1 \geq K-1\\
+    &\qquad\Rightarrow (K-i)g_i \leq G - G_i\,\text{;}
+  \end{align*}
+\item in order to stabilize the $p_1$ vertices of genus $0$ (using the
+  fact that one stabilizing half edge comes for free by connection) we
+  must have
+  \begin{align*}
+    &2 p_1 \leq 2e^{\MAX} - K + N\\
+    &\qquad\Rightarrow 2p_1 \leq G - G_i - (K-i)g_i - K + N\\
+    &\qquad\Rightarrow (K-i)g_i \leq G - G_i - K + N - 2p_1\,\text{.}
+  \end{align*}
+\end{enumerate}
+
+
 
 \subsection{Range for $n_i$}
 
