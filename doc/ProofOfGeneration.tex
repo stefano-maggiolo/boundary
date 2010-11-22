@@ -237,8 +237,8 @@ bit of care, for two reasons:
 \end{itemize}
 So, for example, denote with $c_j$ and $c_{j+1}$ two adjacent columns
 of the matrix~\ref{eq:big matrix}. They are said to be equal if
-$c_{j,i} = c_{j+1,i}$ for any $i \not in \{j, j+1\}$; if they are not
-equal, denote with $i_0$ the minimum index such that $i_0 \not in \{
+$c_{j,i} = c_{j+1,i}$ for any $i \notin \{j, j+1\}$; if they are not
+equal, denote with $i_0$ the minimum index such that $i_0 \notin \{
 j+3, j+1+3\}$ and $c_{j,i_0} \neq c_{j+1,i_0}$. Then $c_j < c_{j+1}$
 if and only if $c_{j,i_0} < c_{j+1,i_0}$. We do not define the
 relation for non-adjacent columns.
@@ -392,140 +392,6 @@ $g_i$:
     &\qquad\Rightarrow 2p_1 \leq G - G_i - (K-i)g_i - K + N\\
     &\qquad\Rightarrow (K-i)g_i \leq G - G_i - K + N - 2p_1\,\text{.}
   \end{align*}
-\end{enumerate}
-
-\subsection{Range for $n_i$}
-
-When deciding $n_i$, we have the following situation:
-\begin{itemize}
-\item as before, $e^{\MAX} = G - G_K + K - 1 \geq K-1$, and the
-  maximum number of half edges still to be assigned and coming from
-  edges is $2e^{\MAX} - K = 2(G - G_K) + K - 2$;
-\item the number of half edges still to be assigned and coming from
-  marked points is $N - N_i - n_i$;
-\item we need $2p_1 - N^{(2)}_i - n^{(2)}_i$ half edges to
-  stabilize the first $p_1$ vertices;
-\item if $g_i = 0$, we need $2(i+1) - N^{(2)}_i - n^{(2)}_i$ half
-  edges to stabilize the first $i+1$ vertices, and we cannot use
-  marked points.
-\end{itemize}
-
-The following conditions define then the ranges for the possible
-choices for $n_i$:
-
-\begin{enumerate}
-\item if there is not a division before $i$ (that is, if $g_i =
-  g_{i-1}$), then we require $n_i \geq n_{i-1}$; otherwise, just $n_i
-  \geq 0$;
-\item we cannot assign more than $N$ marked points, hence (where we
-  treat the case of $g_i = 0$ in a special way)
-  \begin{align*}
-    &N_i + n_i \leq N\\
-    &\qquad\Rightarrow n_i \leq N - N_i\\
-    &\qquad\Rightarrow (p_1 - i)n_i \leq N - N_i\text{ if moreover $g_i = 0$.}
-  \end{align*}
-\item if $g_i = 0$, for the purpose of stabilizing the first $i+1$
-  curves we cannot use marked points anymore, therefore we have
-  \begin{align*}
-    &2 (i+1) - N^{(2)}_i - n^{(2)}_i \leq (2(G - G_K) + K - 2)\\
-    &\qquad\Rightarrow n^{(2)}_i = \min(2, n_i) \geq - (2(G - G_K) + K - 2) + (2(i+1) - N^{(2)}_i)\\
-    &\qquad\Rightarrow
-    \begin{cases}
-      \text{impossible} & \text{if $\mathrm{RHS} > 2$}\\
-      n_i \geq \mathrm{RHS} & \text{otherwise.}
-    \end{cases}
-  \end{align*}
-\end{enumerate}
-
-\subsection{Range for $l_i$}
-
-After deciding $l_i$, this is the situation:
-\begin{itemize}
-\item $e^{\MAX} = G - G_K - L_i - l_i + K - 1 \geq K-1$, and the
-  maximum number of half edges coming from edges to assign is
-  $2e^{\MAX} - K = 2(G - G_K - L_i - l_i) + K - 2$;
-\end{itemize}
-
-The conditions on $l_i$ are then the following:
-\begin{enumerate}
-\item if there is not a division before $i$, then we require $l_i \geq
-  l_{i-1}$; otherwise, just $l_i \geq 0$;
-\item we need at least $K-1$ non-loop edges, hence
-  \begin{align*}
-    &e^{\MAX} \geq K-1\\
-    &\qquad\Rightarrow G - G_K - L_i - l_i + K-1 \geq K-1\\
-    &\qquad\Rightarrow l_i \leq G - G_K - L_i\,\text{;}
-  \end{align*}
-\item let $z$ be the index of the genus $0$ vertex with the least
-  number of stabilizing half edges such that $z < i$; it already has
-  $n_z + 2l_z$ half edges, but we cannot use loops anymore to
-  stabilize it; hence,
-  \begin{align*}
-    &\max(0, 2-n_z-2l_z) \leq G - G_K - L_i - l_i + K - 1\\
-    &\qquad\Rightarrow l_i \leq G - G_k - L_i + K - 3 + n_z + 2l_z
-  \end{align*}
-\item assume $g_i = 0$; if $l_i > 0$, we are adding to the $i$-th
-  vertex $2-n^{(2)}_i$ stabilizing half edges, and to stabilize the
-  $p_1$ genus $0$ vertices, we need to have
-  \begin{align*}
-    &2 p_1 - N^{(2)} - (2-n^{(2)}_i) \leq 2e^{\MAX} - K\\
-    &\qquad\Rightarrow 2p_1 - N^{(2)} - (2-n^{(2)}_i) \max(0, 2-m_i) \leq 2(G - G_K - L_i - l_i + K - 1) - K\\
-    &\qquad\Rightarrow 2l_i \leq 2(G - G_K - L_i) + K + N^{(2)} - n^{(2)}_i - 2p_i\,\text{.}
-  \end{align*}
-\item assume $g_i = 0$; after deciding $l_i$, we still have $e^{\MAX}$
-  edges to place, and each of them can contribute with one half edge
-  to the stabilization of the $i$-th vertex; moreover, one of that
-  half edges is already counted toward the stabilization; hence
-  \begin{align*}
-    &n_i + 2l_i + (e^{\MAX} - 1) \geq 2\\
-    &\qquad\Rightarrow n_i + 2l_i + G - G_K - L_i - l_i + K - 1 - 1 \geq 2\\
-    &\qquad\Rightarrow l_i \geq 4 - n_i - G + G_K + L_i - K\,\text{.}
-  \end{align*}
-\end{enumerate}
-
-\subsection{Range for $a_{i,j}$}
-
-After deciding $a_{i,j}$, this is the situation:
-\begin{itemize}
-\item in this section, the word ``stabilized'' goes back to its
-  original meaning, i.e., it means ``with at least $3$ half edges'';
-  this is necessary since here we may have already placed some
-  non-loop edges, hence we cannot track easily which vertices already
-  are connected to the rest of the graph and which are not;
-\item $e^{\MAX} = G - G_K - L_K - A_{i,j} + K - 1$;
-\item we have already placed edges between $c$ couples of different
-  vertices;
-\end{itemize}
-
-Here are the constraints that $a_{i,j}$ must satisfy:
-\begin{enumerate}
-\item if there is not a division before $i$, then we require $a_{i,j} \geq
-  a_{i-1,j}$; otherwise, just $a_{i,j} \geq 0$;
-\item if there is not a division before $j$, then we require $a_{i,j}
-  \geq a_{i,j-1}$;
-\item we need at least $K-2-c$ (if positive) edges to connect the
-  graph, because if $a_{i,j} > 0$, $c$ will increase by $1$ (this
-  estimate could be very poor, but enforcing the connectedness
-  condition in its entirety before completing the graph is too slow),
-  hence:
-  \begin{align*}
-    &e^{\MAX} - a_{i,j} \geq \max(0, K-2-c)\\
-    &\qquad\Rightarrow a_{i,j} \leq G - G_K - L_K - A_{i,j} +K - 1 - \max(0, K-2-c)\,\text{;}
-  \end{align*}
-\item $a_{i,j}$ contributes with at most $\max(0, 3-h_i) + \max(0,
-  3-h_j)$ stabilizing half edges; hence, to stabilize the $p_1$ genus
-  $0$ vertices, we need
-  \begin{align*}
-    &3p_1 - \sum_{g_{i^\prime} = 0} \min(3, n_i + 2l_i) - (\max(0, 3-h_i) + \max(0, 3-h_j)) \leq 2 (e^{\MAX} - a_{i,j})\\
-    &\qquad\Rightarrow 3p_1 - \sum_{g_{i^\prime} = 0} \min(3, n_i + 2l_i) - (\max(0, 3-h_i) + \max(0, 3-h_j)) \leq \\
-    &\qquad\qquad\qquad \leq 2 (G - G_K - L_K - A_{i,j} + K - 1 - a_{i,j})\\
-    &\qquad\Rightarrow 2a_{i,j} \leq 2 (G - G_K - L_K - A_{i,j} + K - 1) - 3p_1 +\\
-    &\qquad\qquad\qquad +\sum_{g_{i^\prime} = 0} \min(3, n_i + 2l_i) + \max(0, 3-h_i) + \max(0, 3-h_j)\,\text{.}
-  \end{align*}
-\item if $j = K-1$ (that is, if this is the last chance to add half
-  edges to the $i$-th vertex), then we add enough edges from $i$ to
-  $K-1$ in order to stabilize it; moreover, if up to now we did not
-  place any non-loop edge on it, we impose $a_{i,K-1} > 0$.
 \end{enumerate}
 
 
@@ -889,6 +755,140 @@ arguing as in the following example.
   \]
   is finite.
 \end{proof}
+
+\subsection{Range for $n_i$}
+
+When deciding $n_i$, we have the following situation:
+\begin{itemize}
+\item as before, $e^{\MAX} = G - G_K + K - 1 \geq K-1$, and the
+  maximum number of half edges still to be assigned and coming from
+  edges is $2e^{\MAX} - K = 2(G - G_K) + K - 2$;
+\item the number of half edges still to be assigned and coming from
+  marked points is $N - N_i - n_i$;
+\item we need $2p_1 - N^{(2)}_i - n^{(2)}_i$ half edges to
+  stabilize the first $p_1$ vertices;
+\item if $g_i = 0$, we need $2(i+1) - N^{(2)}_i - n^{(2)}_i$ half
+  edges to stabilize the first $i+1$ vertices, and we cannot use
+  marked points.
+\end{itemize}
+
+The following conditions define then the ranges for the possible
+choices for $n_i$:
+
+\begin{enumerate}
+\item if there is not a division before $i$ (that is, if $g_i =
+  g_{i-1}$), then we require $n_i \geq n_{i-1}$; otherwise, just $n_i
+  \geq 0$;
+\item we cannot assign more than $N$ marked points, hence (where we
+  treat the case of $g_i = 0$ in a special way)
+  \begin{align*}
+    &N_i + n_i \leq N\\
+    &\qquad\Rightarrow n_i \leq N - N_i\\
+    &\qquad\Rightarrow (p_1 - i)n_i \leq N - N_i\text{ if moreover $g_i = 0$.}
+  \end{align*}
+\item if $g_i = 0$, for the purpose of stabilizing the first $i+1$
+  curves we cannot use marked points anymore, therefore we have
+  \begin{align*}
+    &2 (i+1) - N^{(2)}_i - n^{(2)}_i \leq (2(G - G_K) + K - 2)\\
+    &\qquad\Rightarrow n^{(2)}_i = \min(2, n_i) \geq - (2(G - G_K) + K - 2) + (2(i+1) - N^{(2)}_i)\\
+    &\qquad\Rightarrow
+    \begin{cases}
+      \text{impossible} & \text{if $\mathrm{RHS} > 2$}\\
+      n_i \geq \mathrm{RHS} & \text{otherwise.}
+    \end{cases}
+  \end{align*}
+\end{enumerate}
+
+\subsection{Range for $l_i$}
+
+After deciding $l_i$, this is the situation:
+\begin{itemize}
+\item $e^{\MAX} = G - G_K - L_i - l_i + K - 1 \geq K-1$, and the
+  maximum number of half edges coming from edges to assign is
+  $2e^{\MAX} - K = 2(G - G_K - L_i - l_i) + K - 2$;
+\end{itemize}
+
+The conditions on $l_i$ are then the following:
+\begin{enumerate}
+\item if there is not a division before $i$, then we require $l_i \geq
+  l_{i-1}$; otherwise, just $l_i \geq 0$;
+\item we need at least $K-1$ non-loop edges, hence
+  \begin{align*}
+    &e^{\MAX} \geq K-1\\
+    &\qquad\Rightarrow G - G_K - L_i - l_i + K-1 \geq K-1\\
+    &\qquad\Rightarrow l_i \leq G - G_K - L_i\,\text{;}
+  \end{align*}
+\item let $z$ be the index of the genus $0$ vertex with the least
+  number of stabilizing half edges such that $z < i$; it already has
+  $n_z + 2l_z$ half edges, but we cannot use loops anymore to
+  stabilize it; hence,
+  \begin{align*}
+    &\max(0, 2-n_z-2l_z) \leq G - G_K - L_i - l_i + K - 1\\
+    &\qquad\Rightarrow l_i \leq G - G_k - L_i + K - 3 + n_z + 2l_z
+  \end{align*}
+\item assume $g_i = 0$; if $l_i > 0$, we are adding to the $i$-th
+  vertex $2-n^{(2)}_i$ stabilizing half edges, and to stabilize the
+  $p_1$ genus $0$ vertices, we need to have
+  \begin{align*}
+    &2 p_1 - N^{(2)} - (2-n^{(2)}_i) \leq 2e^{\MAX} - K\\
+    &\qquad\Rightarrow 2p_1 - N^{(2)} - (2-n^{(2)}_i) \max(0, 2-m_i) \leq 2(G - G_K - L_i - l_i + K - 1) - K\\
+    &\qquad\Rightarrow 2l_i \leq 2(G - G_K - L_i) + K + N^{(2)} - n^{(2)}_i - 2p_i\,\text{.}
+  \end{align*}
+\item assume $g_i = 0$; after deciding $l_i$, we still have $e^{\MAX}$
+  edges to place, and each of them can contribute with one half edge
+  to the stabilization of the $i$-th vertex; moreover, one of that
+  half edges is already counted toward the stabilization; hence
+  \begin{align*}
+    &n_i + 2l_i + (e^{\MAX} - 1) \geq 2\\
+    &\qquad\Rightarrow n_i + 2l_i + G - G_K - L_i - l_i + K - 1 - 1 \geq 2\\
+    &\qquad\Rightarrow l_i \geq 4 - n_i - G + G_K + L_i - K\,\text{.}
+  \end{align*}
+\end{enumerate}
+
+\subsection{Range for $a_{i,j}$}
+
+After deciding $a_{i,j}$, this is the situation:
+\begin{itemize}
+\item in this section, the word ``stabilized'' goes back to its
+  original meaning, i.e., it means ``with at least $3$ half edges'';
+  this is necessary since here we may have already placed some
+  non-loop edges, hence we cannot track easily which vertices already
+  are connected to the rest of the graph and which are not;
+\item $e^{\MAX} = G - G_K - L_K - A_{i,j} + K - 1$;
+\item we have already placed edges between $c$ couples of different
+  vertices;
+\end{itemize}
+
+Here are the constraints that $a_{i,j}$ must satisfy:
+\begin{enumerate}
+\item if there is not a division before $i$, then we require $a_{i,j} \geq
+  a_{i-1,j}$; otherwise, just $a_{i,j} \geq 0$;
+\item if there is not a division before $j$, then we require $a_{i,j}
+  \geq a_{i,j-1}$;
+\item we need at least $K-2-c$ (if positive) edges to connect the
+  graph, because if $a_{i,j} > 0$, $c$ will increase by $1$ (this
+  estimate could be very poor, but enforcing the connectedness
+  condition in its entirety before completing the graph is too slow),
+  hence:
+  \begin{align*}
+    &e^{\MAX} - a_{i,j} \geq \max(0, K-2-c)\\
+    &\qquad\Rightarrow a_{i,j} \leq G - G_K - L_K - A_{i,j} +K - 1 - \max(0, K-2-c)\,\text{;}
+  \end{align*}
+\item $a_{i,j}$ contributes with at most $\max(0, 3-h_i) + \max(0,
+  3-h_j)$ stabilizing half edges; hence, to stabilize the $p_1$ genus
+  $0$ vertices, we need
+  \begin{align*}
+    &3p_1 - \sum_{g_{i^\prime} = 0} \min(3, n_i + 2l_i) - (\max(0, 3-h_i) + \max(0, 3-h_j)) \leq 2 (e^{\MAX} - a_{i,j})\\
+    &\qquad\Rightarrow 3p_1 - \sum_{g_{i^\prime} = 0} \min(3, n_i + 2l_i) - (\max(0, 3-h_i) + \max(0, 3-h_j)) \leq \\
+    &\qquad\qquad\qquad \leq 2 (G - G_K - L_K - A_{i,j} + K - 1 - a_{i,j})\\
+    &\qquad\Rightarrow 2a_{i,j} \leq 2 (G - G_K - L_K - A_{i,j} + K - 1) - 3p_1 +\\
+    &\qquad\qquad\qquad +\sum_{g_{i^\prime} = 0} \min(3, n_i + 2l_i) + \max(0, 3-h_i) + \max(0, 3-h_j)\,\text{.}
+  \end{align*}
+\item if $j = K-1$ (that is, if this is the last chance to add half
+  edges to the $i$-th vertex), then we add enough edges from $i$ to
+  $K-1$ in order to stabilize it; moreover, if up to now we did not
+  place any non-loop edge on it, we impose $a_{i,K-1} > 0$.
+\end{enumerate}
 
 % TODO: write a new section with some data obtained by the program,
 % and consideration on running time (e.g.: running time / found
