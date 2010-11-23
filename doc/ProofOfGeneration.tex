@@ -78,18 +78,18 @@ generate all the stable graphs of genus $g$ with $n$ marked points up
 to isomorphism, for low values of $g$ and $n$.
 
 We construct an algorithm to generate all the stable, $n$-pointed
-graphs of genus $g$. Then we use the library nauty~(\cite{nauty}) to
-eliminate isomorphic graphs from the list of graphs thus
-created. Since to check that two stable graphs are isomorphic is
-computationally onerous, we try to generate a low number of stable
-graphs, provided that we want at least one for every equivalence
-class. The algorithm successively calls recursive functions to build
-the vectors of genera, marked points, and the adjacency matrix. Then
-it checks the stability condition and the condition on the total genus
-as early as possible, in order to minimize the time spent on the
-branches of the recursion that do not lead to stable graphs. Our
-program works effectively with a bound on the maximal number of
-vertices: $2g-2+n<13$.
+graphs of genus $g$, up to isomorphisms. The algorithm uses the
+software nauty~(\cite{nauty}) to eliminate isomorphic graphs from the
+list of graphs thus created. Since to check that two stable graphs are
+isomorphic is computationally onerous, it uses several techniques to
+generates a low number of stable graphs, provided that we want at
+least one for every equivalence class. The algorithm generates
+recursively the vectors of genera, marked points, and the adjacency
+matrix. While it fills these data, it checks the stability condition
+and the condition on the total genus as early as possible, in order to
+minimize the time spent on the branches of the recursion that do not
+lead to stable graphs. Our program works effectively with a bound on
+the maximal number of vertices: $2g-2+n<13$. % TODO
 
 Programs for enumerative computations on
 $\overline{\mathcal{M}}_{g,n}$ have been implemented in both Maple and
@@ -166,7 +166,7 @@ Our task is to generate one stable graph for each isomorphism class.
 
 
 
-\section{A description of our algorithm to generate stable graphs}
+\section{Description of our algorithm}
 
 In this section we describe the general ideas of our algorithm. Let us
 first introduce the notation we use in the program.
@@ -196,12 +196,13 @@ constitute a stable graph. In order, it generates the numbers $g_i$,
 then the numbers $n_i$, $l_i$ (the diagonal part of the matrix $a$),
 and finally, row by row, a symmetric matrix representing $a$.
 
-Finally, when the data have all been generated, we test that all the
+Finally, when the data have all been generated, it tests that all the
 conditions of Definition~\ref{def:stable graph} hold, in particular
-that the graph is actually connected. Then we use the program Nauty
-\cite{nauty} to check if this graph is isomorphic to a previously
-generated graph. If this is not the case, we add the graph to the list
-of graphs of genus $G$ with $N$ marked points.
+that the graph is actually connected and satisfies the stability
+conditions. Then it uses the software nauty \cite{nauty} to check if
+this graph is isomorphic to a previously generated graph. If this is
+not the case, it adds the graph to the list of graphs of genus $G$
+with $N$ marked points.
 
 %The program follows two principles: the first is to generate the
 %smallest possible number of couples of isomorphic stable graphs, the
@@ -212,25 +213,32 @@ of graphs of genus $G$ with $N$ marked points.
  %The range is computed in such a way that assigning a value
 %outside the range would not generate any stable graph; moreover, we
 %tried to minimize the situations in which assigning a value inside the
-%range would not generate any stable graph. 
+%range would not generate any stable graph.
 %We will describe in details the ranges in Section~\ref{sec:ranges}.
 
-%Now let us focus on \underline{the first principle}. 
-It is important to observe here that the entries of $g$,$n$,$l$, and $a$
-are bounded. A simple bound can be given for each entry of $g$ by the 
-number $G$, and for each entry of $n$ by the number $N$. For $l$ and
-$a$ bounds are obtained from $G$ using the condition on the total genus
-\ref{def:stable graph}. These bounds are coarse: Section \ref{sec:ranges}
-will be devoted to implement better bounds. Moreover, we will
-make these bounds dynamical: for instance assigning the value $g_1>0$
-clearly lowers the bound for $g_i, i>1$.
+%Now let us focus on \underline{the first principle}.
 
-The algorithm follows the following principle: we want to generate
-the smallest possible number of couples of isomorphic stable graphs.
-Here we generalize the idea that to generate a vector for every 
-class of vectors of length $K$ modulo permutations, the 
-simplest way is to generate vectors whose entries are increasing. 
-The program fills the data in the order shown in the matrix
+A priori, for each entry of $g$, $n$, $l$, and $a$ the program tries
+to fill that position with all integers. This of course is not
+possible, indeed it is important to observe here that each datum is
+bounded. From below, a trivial bound is $0$, that is, no datum can be
+negative. Instead, a simple upper bound can be given for each entry of
+$g$ by the number $G$, and for each entry of $n$ by the number
+$N$. For $l$ and $a$, upper bounds are obtained from $G$ using the
+condition on the total genus (Condition~\ref{def:stable graph}).
+
+These bounds are coarse: Section \ref{sec:ranges} will be devoted to
+prove sharper bounds, from above and from below. Also, we will make
+these bounds dynamical: for instance assigning the value $g_0 > 0$
+clearly lowers the bound for $g_i, i > 0$. Nonetheless, once we assess
+these bounds, we are sure that the recursion terminates.
+
+The algorithm follows the following principle: we want to generate the
+smallest possible number of couples of isomorphic stable graphs. Here
+we generalize the idea that to generate a vector for every class of
+vectors of length $K$ modulo permutations, the simplest way is to
+generate vectors whose entries are increasing. The program fills the
+data in the order shown in the matrix
 \begin{equation}\label{eq:big matrix}
   \begin{pmatrix}
     g_0 & g_1 & \cdots & g_{K-1}\\
@@ -243,45 +251,47 @@ The program fills the data in the order shown in the matrix
     a_{K-1,0} & \cdots & a_{K-1,K-2} & \bullet
   \end{pmatrix}\text{,}
 \end{equation}
-and generates only matrices whose columns are ordered. Loosely speaking,
-here we are ordering the columns lexicographically. This requires a
-bit of care, for two reasons:
+and generates only matrices whose columns are ordered. Loosely
+speaking, we intend that we are ordering the column lexicographically,
+but this requires a bit of care, for two reasons:
 \begin{itemize}
-\item the first is that the matrix $a$ needs to be symmetric; in the
-  program we generate only the strictly upper triangular part;
+\item the matrix $a$ needs to be symmetric; in the program we generate
+  only the strictly upper triangular part;
 \item the diagonal of $a$ need not be considered when deciding if a
   column is greater or equal than the previous one.
 \end{itemize}
 
-We define a relation (``order'') for adjacent columns. 
-Let us call $c_j$ and $c_{j+1}$ two adjacent columns
+Therefore, to be precise, we define a relation (\emph{order}) for
+adjacent columns. Let us call $c_{j-1}$ and $c_j$ two adjacent columns
 of the matrix~\ref{eq:big matrix}. They are said to be equivalent if
-$c_{j,i} = c_{j+1,i}$ for any $i \notin \{j+3, j+3+1\}$. If they are not
-equivalent, denote with $i_0$ the minimum index such that $i_0 \notin \{
-j+3, j+3+1\}$ and $c_{j,i_0} \neq c_{j+1,i_0}$. Then we define the  
-relation $c_j < c_{j+1}$ if and only if $c_{j,i_0} < c_{j+1,i_0}$. 
-We do not define the relation for non-adjacent columns.
-The data are ordered when the columns are weakly increasing, i.e.
-for all $j$, either $c_j$ is equivalent to $c_{j+1}$ or $c_j < c_{j+1}$.
-
+$c_{j-1,i} = c_{j,i}$ for any $i \notin \{j-1+3, j+3\}$. If they are
+not equivalent, denote with $i_0$ the minimum index such that $i_0
+\notin \{ j-1+3, j+3\}$ and $c_{j-1,i_0} \neq c_{j,i_0}$. Then we
+state the relation $c_{j-1} < c_j$ if and only if $c_{j-1,i_0} <
+c_{j,i_0}$. We do not define the relation for non-adjacent columns.
+We say that the data are ordered when the columns are weakly
+increasing, that is if, for all $j$, either $c_{j-1}$ is equivalent to
+$c_j$ or $c_{j-1} < c_j$.
 
 To ensure that the columns are ordered (in the sense we explained
 before), the program keeps track of \emph{divisions}. We start filling
-the genus vector $g$ in a non decreasing way, and every time 
-a value $g_i$ strictly greater than $g_{i-1}$ is assigned, we put a 
-division before $i$. %This means that when we decide the value of a 
-%datum regarding index $i$, we can ignore the value of that datum for the index $i-1$,
-%because the column $c_i$ is already bigger than the column
-%$c_{i-1}$. Otherwise, if there is not a division before $i$, we would
+the genus vector $g$ in a non decreasing way, and every time a value
+$g_i$ strictly greater than $g_{i-1}$ is assigned, we put a division
+before $i$.
+% TODO: the following needs to be rewritten
+This means that, in the following, when we decide the
+value of a datum regarding index $i$, we can ignore the value of that
+datum for the index $i-1$, because the column $c_i$ is already bigger
+than the column $c_{i-1}$.
+%Otherwise, if there is not a division before $i$, we would
 %have been forced to put a value which is bigger or equal than the one
 %in position $i-1$.
 
-%Indeed, 
-After completing $g$, we start filling the vector $n$ in such
-a way that, within two divisions, it is non decreasing. Again we
-introduce a division before $i$ every time we assign a value $n_i$
-strictly greater than $n_{i-1}$. We follow this procedure also for the
-vector $l$.
+After completing $g$, we start filling the vector $n$ in such a way
+that, within two divisions, it is non decreasing. Again we introduce a
+division before $i$ every time we assign a value $n_i$ strictly
+greater than $n_{i-1}$. We follow this procedure also for the vector
+$l$.
 
 Finally, we start filling the rows of the matrix $a$. Here the
 procedure is a bit different, because, even if we fill only the upper
@@ -302,16 +312,14 @@ that the value of $a_{i,j}$ is assigned starting from:
 and we put a division before $i$ if $a_{i,j} > a_{i-1,j}$ and a division
 before $j$ if $a_{i,j} > a_{i,j-1}$.
 
-%\begin{remark}
-  We cannot conclude immediately that this procedure gives us all
-  possible data up to permutations as in the case of a single
-  vector. This is because the transformation that the matrix undergo
-  when a permutation is applied is more complicated: for the first
-  three rows, it just permute the columns, but for the remaining rows,
-  it permutes both rows and columns. Indeed, to prove that the procedure
-  of generating only ordered columns does not miss any stable graph 
-  is the content of the following section.
-%\end{remark}
+We cannot conclude immediately that this procedure gives us all
+possible data up to permutations as in the case of a single
+vector. This is because the transformation that the matrix undergo
+when a permutation is applied is more complicated: for the first three
+rows, it just permutes the columns, but for the remaining rows, it
+permutes both rows and columns. Indeed, to prove that the procedure of
+generating only ordered columns does not miss any stable graph is the
+content of the following section.
 
 
 
@@ -342,15 +350,15 @@ and stable, since we explicitly check these conditions for each graph.
 \begin{notation}
   We have seen previously that we can encode the data of a stable
   graph in a quadruple $G \coloneqq (g, n, l, a)$. We denote by
-  $\mathcal{M}$ the set of all quadruples generated by the algorithm
-  described in the previous section, and by $\mathcal{A}$ the set of
-  all quadruples that define a stable graph.
+  $\mathcal{A}$ the set of all quadruples that define a stable graph,
+  whereas by $\mathcal{M}$ the set of all quadruples generated by the
+  algorithm described in the previous section.
 \end{notation}
 
-Since our program only generates stable graphs, we have
-the inclusion $\mathcal{M} \subset \mathcal{A}$; hence, in order to prove
-Proposition~\ref{prop:main}, it is equivalent to prove that every $G \in
-\mathcal{A}$ is in $\mathcal{M}$ up to applying a permutation of
+Since our program only generates stable graphs, we have the inclusion
+$\mathcal{M} \subset \mathcal{A}$; hence, in order to prove
+Proposition~\ref{prop:main}, it is equivalent to prove that every $G
+\in \mathcal{A}$ is in $\mathcal{M}$ up to applying a permutation of
 $\ubar{K}$. The key point is to give two characterizations
 (Lemma~\ref{lemma:char1} and~\ref{lemma:char2}) of the property of
 being an element of $\mathcal{M}$.
@@ -485,22 +493,23 @@ being an element of $\mathcal{M}$.
 In particular, in view of the last definition, Lemma~\ref{lemma:char1} translates into the following statement: \emph{A stable graph $G \in \mathcal{A}$ has a breaking position
   if and only if $G$ is not an element of $\mathcal{M}$}.
 
-We now introduce a total order on the set $\mathcal{A}$ of graphs $G = (g,n,l,a)$. If $G$ is such a graph, let $v(G)$ be the vector obtained by
-juxtaposition of the vectors $g$, $n$, $l$ and of the rows of the
+We now introduce a total order on the set $\mathcal{A}$ of graphs $G =
+(g,n,l,a)$. If $G$ is such a graph, let $v(G)$ be the vector obtained
+by juxtaposition of the vectors $g$, $n$, $l$ and of the rows of the
 upper triangular part of $a$. For example, if
-\begin{align*}
-  &\begin{aligned}
-    G = \biggl(&g = (0,0,2,0),\\
-    &\qquad \qquad n = (1,1,0,1),\\[6pt]
-    &\qquad \qquad \qquad \qquad l = (0,0,0,0),\\
-    &\qquad \qquad \qquad \qquad \qquad \qquad a = \psm{ 0 & 1 & 1 &
-      1\\ 1 & 0 & 2 & 1\\ 1 & 2 & 0 & 0 \\ 1 & 1 & 0 & 0 }
-    \biggr)\text{,}
-  \end{aligned}
-  && \eqqcolon &&\psm{ 0 & 0 & 2 & 0\\ 1 & 1 & 0 & 1\\ 0 & 0 & 0 & 0\\
-    & 1 & 1 & 1\\ && 2 & 1\\ &&& 0 }
-\end{align*}
-then
+\[
+  G = \begin{pmatrix}
+    0 & 0 & 2 & 0\\
+    1 & 1 & 0 & 1\\
+    0 & 0 & 0 & 0\\
+    \hline
+    \bullet & 1 & 1 & 1\\
+    1 & \bullet & 2 & 1\\
+    1 & 2 & \bullet & 0\\
+    1 & 1 & 0 & \bullet
+  \end{pmatrix}
+\]
+(with the same meaning of~\ref{eq:big matrix}), then
 \[
 v(G) = (0, 0, 2, 0,\quad 1, 1, 0, 1,\quad 0, 0, 0, 0,\quad 1, 1,
 1,\quad 2, 1,\quad 0)\,\text{.}
