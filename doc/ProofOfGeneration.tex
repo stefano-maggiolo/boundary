@@ -43,13 +43,13 @@
 \begin{document}
 
 \begin{abstract}
-  We present the program \texttt{strata}, whose source files are
-  available at \href{http://people.sissa.it/~maggiolo/strata/}
-  {\texttt{http://people.sissa.it/\~{}maggiolo/strata/}}. Given two
+  We present the program \texttt{boundary}, whose source files are
+  available at \href{http://people.sissa.it/~maggiolo/boundary/}
+  {\texttt{http://people.sissa.it/\~{}maggiolo/boundary/}}. Given two
   natural numbers $g$ and $n$ satisfying $2g+n-2>0$, the program
-  generates all genus $g$ stable graphs with $n$ marked points. Each such
-  graph determines the topological type of a nodal stable curve of
-  arithmetic genus $g$ with $n$ marked points. Our motivation comes
+  generates all genus $g$ stable graphs with $n$ marked points. Each
+  such graph determines the topological type of a nodal stable curve
+  of arithmetic genus $g$ with $n$ marked points. Our motivation comes
   from the fact that the boundary of the moduli space of stable genus
   $g$, $n$-pointed curves can be stratified by taking loci of curves
   of a fixed topological type.
@@ -937,11 +937,69 @@ Here are the constraints that $a_{i,j}$ must satisfy:
   place any non-loop edge on it, we impose $a_{i,K-1} > 0$.
 \end{enumerate}
 
-% TODO: write a new section with some data obtained by the program,
-% and consideration on running time (e.g.: running time / found
-% graphs)
-% \section{Performance}
 
+
+\section{Performance}
+
+The complexity of the problem we are trying to solve is intrinsically
+higher than polynomial, because already the amount of data to generate
+increase (at least) exponentially with the genera and the number of
+marked points. We observed an exponential growth also of the ratio
+between the time required to solve an instance of the problem and the
+number of graph generated. Anyway, our program is specifically
+designed to attack the problem of stable graphs, and it can be
+expected to perform much better than any general method to generate
+graphs applied to our situation.
+
+We present here some of the results obtained testing our program on an
+Intel\textregistered{} Core\texttrademark 2 Quad Processor Q9450 at
+2.66\,GHz. The version we tested is not designed for parallel
+processing, hence it used only one of the four cores
+available.
+
+However, when computing a specific graph, the program need to have in
+memory only the graphs with the same values in the vectors $g$, $n$,
+$l$. This allows us to neglect memory usage, but also shows that we
+can assign the computations of stable graphs with prescribed $g$, $n$,
+$l$ to different cores or \textsc{cpu}s, thus having a highly
+parallelized implementation of the program.
+
+\begin{table}\label{tab:number}
+  \caption{Time needed to compute and number of all stable graph of type $(G,N)$.}
+  \begin{tabular}{rrrr}
+    $G$ & $N$ & Time (s) & \# stable graphs\\
+    \hline
+    0 & 18 & 392 &   847,511\\
+    1 & 14 & 539 & 1,832,119\\
+    2 & 10 & 147 & 1,282,008\\
+    3 &  7 & 117 & 1,280,752\\
+    4 &  5 & 459 & 2,543,211\\
+    5 &  3 & 606 & 2,575,193\\
+    6 &  1 & 226 &   962,172\\
+    7 &  0 & 681 & 1,281,678\\
+  \end{tabular}
+\end{table}
+
+In Table~\ref{tab:number} we list, for each genus $G$, the maximum
+number of marked points $N$ for which we can compute all the stable
+graphs of type $(G, N)$ in under 15 minutes.
+
+\begin{figure}\label{fig:plot}
+  \caption{Logarithm of time needed to compute all stable graphs of
+    type $(G, N)$.}
+  \includegraphics{plot.pdf}
+\end{figure}
+
+In Figure~\ref{fig:plot} we show all the couples $(G, N)$ that we
+computed against the time needed; the lines connect the results
+referring to the same genus. From this plot it seems that, for $G$
+fixed, the time required increases exponentially with $N$. However, we
+believe that in the long run the behaviour will be worse.
+
+More benchmarks and up-to-date results are available at
+\texttt{boundary}'s webpage,
+\href{http://people.sissa.it/~maggiolo/boundary/}
+{\texttt{http://people.sissa.it/\~{}maggiolo/boundary/}}.
 
 \begin{thebibliography}{2}
 
