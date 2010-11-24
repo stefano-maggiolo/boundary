@@ -956,20 +956,20 @@ designed to attack the problem of stable graphs, and it can be
 expected to perform much better than any general method to generate
 graphs applied to our situation.
 
-We present here some of the results obtained testing our program on an
+We present here some of the results obtained by testing our program on an
 Intel\textregistered{} Core\texttrademark 2 Quad Processor Q9450 at
 2.66\,GHz. The version we tested is not designed for parallel
 processing, hence it used only one of the four cores
 available.
 
-However, when computing a specific graph, the program need to have in
+However, when computing a specific graph, the program needs to keep in the
 memory only the graphs with the same values in the vectors $g$, $n$,
 $l$. This allows us to neglect memory usage, but also shows that we
 can assign the computations of stable graphs with prescribed $g$, $n$,
 $l$ to different cores or \textsc{cpu}s, thus having a highly
 parallelized implementation of the program.
 
-\begin{table}\label{tab:number}
+\begin{table}[h!]\label{tab:number}
   \caption{Time needed to compute and number of all stable graph of type $(G,N)$.}
   \begin{tabular}{rrrr}
     $G$ & $N$ & Time (s) & \# stable graphs\\
@@ -987,7 +987,7 @@ parallelized implementation of the program.
 
 In Table~\ref{tab:number} we list, for each genus $G$, the maximum
 number of marked points $N$ for which we can compute all the stable
-graphs of type $(G, N)$ in under 15 minutes.
+graphs of type $(G, N)$ under 15 minutes.
 
 \begin{figure}\label{fig:plot}
   \caption{Logarithm of time needed to compute all stable graphs of
