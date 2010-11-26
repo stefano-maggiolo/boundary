@@ -18,7 +18,7 @@ HDRS = $(wildcard *.h)
 # DEBUG_GNL_COUNT: For each value of K,g,n,l, prints the number of
 # stable graphs with that values
 
-BOUNDARYFLAGS = -DUSE_NAUTY #-DEMPTY_OFTEN #-DDEBUG_GNL_COUNT
+BOUNDARYFLAGS = -DUSE_NAUTY -DEMPTY_OFTEN #-DDEBUG_GNL_COUNT
 CPPFLAGS = -O3 -DHAVE_GETRUSAGE=1 -DHAVE_MAXRSS=0
 
 all: $(EXES)

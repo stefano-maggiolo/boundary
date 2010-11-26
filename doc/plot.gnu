@@ -10,10 +10,9 @@ set xrange [0:20]
 set key right bottom
 set output 'plot.pdf'
 
-set ylabel "Time (log(s))"
+set ylabel "Time (log(ms))"
 set xlabel "N"
 
-#set title "Log of time (log(s))" font 'cmr10' 20
 plot 'dump.dat' using 2:(log($4+1)) every :::0::0 title "g=0" with linespoint ls 1 pt 1,\
      'dump.dat' using 2:(log($4+1)) every :::1::1 title "g=1" with linespoint ls 2 pt 1,\
      'dump.dat' using 2:(log($4+1)) every :::2::2 title "g=2" with linespoint ls 3 pt 1,\
