@@ -662,8 +662,8 @@ finally the upper triangular part of $a$ row after row.
   
   We let $e^{\MAX}$ be the maximum number of edges that could be placed 
   after that time, and $c$ be the number of couples of (different) vertices
-  already connected by an edge. We let $p_1$ be the number of vertices $i$ 
-  to which the algorithm has assigned $g_i = 0$. Note that the final value 
+  already connected by an edge. We let $p_1$ be the number of vertices $z$ 
+  to which the algorithm has assigned $g_z = 0$. Note that the final value 
   of $p_1$ is determined when the first genus greater than $0$ is assigned, 
   in particular the final value of $p_1$ is determined at the end of the
   assignment of the values to the vector $g$. On the other hand, $c$ starts
@@ -886,6 +886,10 @@ Here are the constraints that $a_{i,j}$ must satisfy:
   edges to the $i$-th vertex), then we add enough edges from $i$ to
   $K-1$ in order to stabilize the vertex $i$; moreover, if up to now we did not
   place any non-loop edge on the vertex $i$, we impose $a_{i,K-1} > 0$.
+  \begin{align*}
+    &a_{i,K-1}>0 \text{ if $ a_{i,j} = 0$ forall $1<j<K-1$,}\\
+    &a_{i,K-1}\geq 3-h_i\text{ if $g_i = 0$.}
+  \end{align*}
 \end{enumerate}
 
 
