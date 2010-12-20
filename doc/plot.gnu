@@ -16,4 +16,5 @@ plot 'dump.dat' using 2:($4/1000.0) every :::0::0 title "g=0" with linespoint ls
      'dump.dat' using 2:($4/1000.0) every :::4::4 title "g=4" with linespoint ls 5 pt 1,\
      'dump.dat' using 2:($4/1000.0) every :::5::5 title "g=5" with linespoint ls 8 pt 1,\
      'dump.dat' using 2:($4/1000.0) every :::6::6 title "g=6" with linespoint ls 7 pt 1,\
-     'dump.dat' using 2:($4/1000.0) every :::7::7 title "g=7" with linespoint ls 9 pt 1
+     'dump.dat' using 2:($4/1000.0) every :::7::7 title "g=7" with linespoint ls 9 pt 1#,\
+#     'dump.dat' using 2:($4/1000.0) every :::8::8 title "g=8" with linespoint ls 10 pt 1
