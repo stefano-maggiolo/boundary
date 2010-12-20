@@ -89,8 +89,8 @@ recursively the vectors of genera, marked points, and the adjacency
 matrix. While it fills these data, it checks the stability condition
 and the condition on the total genus as early as possible, in order to
 minimize the time spent on the branches of the recursion that do not
-lead to stable graphs. Our program works effectively with a bound on
-the maximal number of vertices: $2g-2+n<13$. % TODO
+lead to stable graphs. Some analysis of the algorithm's performances
+can be seen in Section~\ref{sec:performance}.
 
 Programs for enumerative computations on
 $\overline{\mathcal{M}}_{g,n}$ have been implemented in both Maple and
@@ -464,7 +464,7 @@ Proposition~\ref{prop:main}.
     a_{i,j}$, and again we have $H \prec G$.
   \end{itemize}
 
-  \begin{figure}\label{fig:a}
+  \begin{figure}[t]\label{fig:a}
     \begin{tikzpicture}[xscale=0.25,yscale=-0.25]
       \node at (-1,7.5) {$\scriptstyle{i}$};
       \node at (12.5,-1) {$\scriptstyle{j}$};
@@ -676,7 +676,7 @@ finally the upper triangular part of $a$ row after row.
   $c$ and $p_1$ are then updated according to the assignment itself.
 \end{notation}
 
-\begin{notation} \label{partialassign}
+\begin{notation} \label{not:partial_assign}
   When deciding $g$, $n$, or $l$, we let $n^{(2)}_i$ be the minimum
   between $2$ and the number of half edges already assigned to the
   $i$-th vertex. This is justified by the fact that we know that at
@@ -847,7 +847,7 @@ The conditions on $l_i$ are then the following:
 
 When deciding $a_{i,j}$, this is the situation:
 \begin{itemize}
-\item earlier in Notation \ref{partialassign}, we observed that for the
+\item earlier in Notation \ref{not:partial_assign}, we observed that for the
 	purpose of filling the vectors $g$,$n$ and $l$ we could consider a genus $0$
 	vertex stabilized when it had at least two half-edges (since the graph
 	is going to be connected eventually). When assigning the values of $a$ instead,
@@ -890,14 +890,14 @@ Here are the constraints that $a_{i,j}$ must satisfy:
   $K-1$ in order to stabilize the vertex $i$; moreover, if up to now we did not
   place any non-loop edge on the vertex $i$, we impose $a_{i,K-1} > 0$.
   \begin{align*}
-    &a_{i,K-1}>0 \text{ if $ a_{i,j} = 0$ forall $1<j<K-1$,}\\
-    &a_{i,K-1}\geq 3-h_i\text{ if $g_i = 0$.}
+    a_{i,K-1}&>0  &&\text{ if $ a_{i,j} = 0$ forall $1<j<K-1$,}\\
+    a_{i,K-1}&\geq 3-h_i &&\text{ if $g_i = 0$.}
   \end{align*}
 \end{enumerate}
 
 
 
-\section{Performance}
+\section{Performance}\label{sec:performance}
 
 The complexity of the problem we are trying to solve is intrinsically
 higher than polynomial, because already the amount of data to generate
@@ -922,7 +922,7 @@ can assign the computations of stable graphs with prescribed $g$, $n$,
 $l$ to different cores or \textsc{cpu}s, thus having a highly
 parallelized implementation of the program.
 
-\begin{table}\label{tab:number}
+\begin{table}[t]\label{tab:number}
   \begin{tabular}{rrrr}
     $G$ & $N$ & Time (s) & \# stable graphs\\
     \hline
@@ -935,7 +935,7 @@ parallelized implementation of the program.
     6 &  1 & 226 &   962,172\\
     7 &  0 & 681 & 1,281,678\\
   \end{tabular}
-  \caption{Time needed to compute and number of all stable graph of type $(G,N)$.}
+  \caption{For small $G$, the maximum $N$ such that all stable graphs of type $(G,N)$ can be computed in less than $15$ minutes.}
 \end{table}
 
 In Table~\ref{tab:number} we list, for each genus $G$, the maximum
@@ -952,7 +952,8 @@ In Figure~\ref{fig:plot} we show all the couples $(G, N)$ that we
 computed against the time needed; the lines connect the results
 referring to the same genus. From this plot it seems that, for $G$
 fixed, the time required increases exponentially with $N$. However, we
-believe that in the long run the behaviour will be worse.
+believe that in the long run the behaviour will be worse than
+exponential.
 
 More benchmarks and up-to-date results are available at
 \texttt{boundary}'s webpage,
