@@ -122,7 +122,7 @@ Graph::PrintLaTeX(FILE* f) const
         fprintf(f, "      \\tikzstyle{level 1}=[counterclockwise from=%d,level distance=9mm,sibling angle=%d]\n", -120+360*i/K+2*param-param2, (m[i]==1?0: (60+2*param2)/(m[i]-1)));
       (m[i]==1 && K==1)? inutile = 30:inutile=0;
       if (m[i]!=0 && a[i][i] ==0)
-        fprintf(f, "      \\tikzstyle{level 1}=[counterclockwise from=%d,level distance=9mm,sibling angle=%d]\n", -60+360*i/K+2*param-param2+inutile, (m[i]==1?0: (120+8*param2)/(m[i]-1)));;
+        fprintf(f, "      \\tikzstyle{level 1}=[counterclockwise from=%d,level distance=9mm,sibling angle=%d]\n", -60+360*i/K+2*param-param2+inutile, (m[i]==1?0: (120+8*param2)/(m[i]-(K==1?0:1))));;
       fprintf(f, "      \\node (A%d) at (%d:1) {$\\scriptstyle{%d_{%d}}$}", i, (360 * i / K), g[i], m[i]);
       for (int j= 0; j< m[i]; j++)
         fprintf(f, " child");
