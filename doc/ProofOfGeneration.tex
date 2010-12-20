@@ -130,7 +130,8 @@ K-1\}$. Let $\Sigma_K$ be the symmetric group on the set $\ubar{K}$.
   multigraph $\graph = (V, E)$, subject to the following conditions.
   \begin{enumerate}
   \item The color of a vertex $v$ is given by a pair of natural
-    numbers $(g_v, n_v)$.
+    numbers $(g_v, n_v)$. The two numbers are called respectively 
+    the \emph{genus} and the \emph{number of marked points} of the vertex $v$.
   \item\label{it:condition connected} $\graph$ is connected.
   \item\label{it:condition genus} Its \emph{total genus}, defined as
     $\sum_{v \in V} g_v + \abs{E} - (\abs{V} - 1)$, equals $G$.
@@ -142,12 +143,13 @@ K-1\}$. Let $\Sigma_K$ be the symmetric group on the set $\ubar{K}$.
 \end{definition}
 
 \begin{notation}
-  We will call \emph{half edge} associated to a vertex $v$ either a
-  marked point on $v$ or half of an edge that connects $v$ to an other
-  vertex. In this way the stability condition can be rephrased in: for
-  every vertex $v$ of genus $0$ there are at least $3$ half edges on
-  it. An half edge is said to come from an edge if it is of the
-  second type.
+  The number $\deg v + n_v$ is often called the \emph{number of half edges}
+  associated to the vertex $v$. It is the number of edges that connect $v$ 
+  to an other vertex plus the number of marked points of $v$. 
+  %In this way the stability condition can be 
+  %rephrased in: for every vertex $v$ of genus $0$, its number of half edges 
+  %is at least $3$. %An half edge is said to come from an edge if it is of the
+  %second type.
 \end{notation}
 
 Two stable graphs $\graph = (V, E, g, n)$ and $\graph^\prime =
@@ -162,7 +164,8 @@ Our task is to generate one stable graph for each isomorphism class.
 
 \begin{remark}
   Note that from the definition just given, we are working with an
-  unordered set of marked points.
+  unordered set of marked points. The output of the program are the
+  boundary strata of $\overline{\mathcal{M}}_{g,n}/\Sigma_N$.
 \end{remark}
 
 
@@ -280,7 +283,7 @@ the genus vector $g$ in a non decreasing way, and every time a value
 $g_j$ strictly greater than $g_{j-1}$ is assigned, we put a division
 before $j$.
 % TODO: the following needs to be rewritten
-This means that, when we assigning the value of $n_j$, we will allow
+This means that, when assigning the value of $n_j$, we allow
 the algorithm to start again from $0$ instead of $n_{j-1}$, because the column
 $c_j$ is already bigger than the column $c_{j-1}$.
 %Otherwise, if there is not a division before $i$, we would
