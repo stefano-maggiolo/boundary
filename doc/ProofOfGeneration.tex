@@ -464,7 +464,7 @@ Proposition~\ref{prop:main}.
     a_{i,j}$, and again we have $H \prec G$.
   \end{itemize}
 
-  \begin{figure}[t]\label{fig:a}
+  \begin{figure}[t]
     \begin{tikzpicture}[xscale=0.25,yscale=-0.25]
       \node at (-1,7.5) {$\scriptstyle{i}$};
       \node at (12.5,-1) {$\scriptstyle{j}$};
@@ -511,7 +511,7 @@ Proposition~\ref{prop:main}.
     \caption{The matrix $a$ when the first breaking position is
       $a_{i,j}$ with $j > i$ (left) or $j < i$ (right). When
       transposing $j-1$ and $j$, the white and the diagonal-filled
-      entries do not change.}
+      entries do not change.}\label{fig:a}
   \end{figure}
 
   Conversely, let $j$ be such that $H \coloneqq \sigma_{j-1,j} G \prec
@@ -922,7 +922,13 @@ can assign the computations of stable graphs with prescribed $g$, $n$,
 $l$ to different cores or \textsc{cpu}s, thus having a highly
 parallelized implementation of the program.
 
-\begin{table}[t]\label{tab:number}
+\begin{figure}[t]
+  \includegraphics{plot.pdf}
+  \caption{Logarithm of time needed to compute all stable graphs of
+    type $(G, N)$.}\label{fig:plot}
+\end{figure}
+
+\begin{table}[t]
   \begin{tabular}{rrrr}
     $G$ & $N$ & Time (s) & \# stable graphs\\
     \hline
@@ -933,20 +939,14 @@ parallelized implementation of the program.
     4 &  5 & 459 & 2,543,211\\
     5 &  3 & 606 & 2,575,193\\
     6 &  1 & 226 &   962,172\\
-    7 &  0 & 681 & 1,281,678\\
-  \end{tabular}
-  \caption{For small $G$, the maximum $N$ such that all stable graphs of type $(G,N)$ can be computed in less than $15$ minutes.}
+    7 &  0 & 681 & 1,281,678
+  \end{tabular}\vspace{\baselineskip}
+  \caption{For small $G$, the maximum $N$ such that all stable graphs of type $(G,N)$ can be computed in less than $15$ minutes.}\label{tab:number}
 \end{table}
 
 In Table~\ref{tab:number} we list, for each genus $G$, the maximum
 number of marked points $N$ for which we can compute all the stable
 graphs of type $(G, N)$ under 15 minutes.
-
-\begin{figure}\label{fig:plot}
-  \includegraphics{plot.pdf}
-  \caption{Logarithm of time needed to compute all stable graphs of
-    type $(G, N)$.}
-\end{figure}
 
 In Figure~\ref{fig:plot} we show all the couples $(G, N)$ that we
 computed against the time needed; the lines connect the results
