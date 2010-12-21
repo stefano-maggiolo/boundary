@@ -464,7 +464,7 @@ Proposition~\ref{prop:main}.
   one in $g$, $n$, or $l$, it is trivial to see that transposing that
   index with the previous one gives a smaller matrix. If this is not
   the case, let $a_{i,j}$ be a breaking position such that
-  $a_{i,j^\prime}$ is not a breaking position whenever $j^\prime<j$
+  $a_{i^\prime,j}$ is not a breaking position whenever $i^\prime < i$
   (the position $(i,j)$ is the first breaking position of its
   column). We deduce that $g_{j-1} = g_j$, $n_{j-1} = n_j$, $l_{j-1} =
   l_j$, and that for all $i^\prime < i$ not in $\{j-1,j\}$, we have
@@ -525,10 +525,10 @@ Proposition~\ref{prop:main}.
       \foreach \x in {0,1,...,14}
       \filldraw (\x,\x) -- (\x,\x+1) -- (\x+1,\x+1) -- (\x+1,\x) -- cycle;
     \end{tikzpicture}
-    \caption{The matrix $a$ when the first breaking position is
-      $a_{i,j}$ with $j > i$ (left) or $j < i$ (right). When
-      transposing $j-1$ and $j$, the white and the diagonal-filled
-      entries do not change.}\label{fig:a}
+    \caption{The matrix $a$ when the first breaking position (the
+      bullet) is $a_{i,j}$ with $j > i$ (left) or $j < i$
+      (right). When transposing $j-1$ and $j$, the white and the
+      diagonal-filled entries do not change.}\label{fig:a}
   \end{figure}
 
   Conversely, let $j$ be such that $H \coloneqq \sigma_{j-1,j} G \prec
@@ -537,36 +537,33 @@ Proposition~\ref{prop:main}.
   breaking position. If it occurs in the matrix $a$ (equivalently, in
   the last $K$ rows), it is actually the smallest breaking position of
   its column.
-
-  % If the first difference between $G$ and $H$ lies in $g$, $n$, or
-  % $l$, then it is easy to see that the corresponding position is
-  % breaking. Otherwise, if the three vectors ($g$, $n$, and $l$) of
-  % $G$ and $H$ coincide, let us compare $v(G)$ and $v(H)$, and take
-  % the
-  % first element (reading from left to right)
-
-  % we observe Figure~\ref{fig:a} imagining that it
-  % represents the matrix $a$ for the graph $G$.
-  % let us compare $a_{i^\prime,j-1}$ and $a_{i^\prime,j}$ for
-  % $i^\prime = 0$:
-  % \begin{itemize}
-  % \item if $a_{0,j-1} > a_{0,j}$, then $a_{0,j}$ is indeed a
-  %   breaking
-  %   position for $G$ and we finish;
-  % \item $a_{0,j-1} < a_{0,j}$ cannot happen, because this would mean
-  %   that $G \prec H$;
-  % \item if $a_{0,j-1} = a_{0,j}$, we repeat this trichotomy for
-  %   $i^\prime = 1$.
-  % \end{itemize}
-  % Now, if we iterate the procedure, we continue until $i^\prime =
-  % j-2$, when we change strategy, comparing instead
-  % $a_{j-1,i^\prime}$
-  % with $a_{j,i^\prime}$, for $i^\prime > j$. The idea is then the
-  % same: there is a trichotomy, one case conclude our proof, the
-  % second cannot happen and the third force us to continue. But we
-  % cannot continue till the end, because if we find always equality,
-  % this means that $H \not\prec G$, because they are indeed equal.
 \end{proof}
+
+% If the first difference between $G$ and $H$ lies in $g$, $n$, or
+% $l$, then it is easy to see that the corresponding position is
+% breaking. Otherwise, if the three vectors ($g$, $n$, and $l$) of $G$
+% and $H$ coincide, let us compare $v(G)$ and $v(H)$, and take the
+% first element (reading from left to right)
+
+% we observe Figure~\ref{fig:a} imagining that it
+% represents the matrix $a$ for the graph $G$.
+% let us compare $a_{i^\prime,j-1}$ and $a_{i^\prime,j}$ for
+% $i^\prime = 0$:
+% \begin{itemize}
+% \item if $a_{0,j-1} > a_{0,j}$, then $a_{0,j}$ is indeed a breaking
+%   position for $G$ and we finish;
+% \item $a_{0,j-1} < a_{0,j}$ cannot happen, because this would mean
+%   that $G \prec H$;
+% \item if $a_{0,j-1} = a_{0,j}$, we repeat this trichotomy for
+%   $i^\prime = 1$.
+% \end{itemize}
+% Now, if we iterate the procedure, we continue until $i^\prime =
+% j-2$, when we change strategy, comparing instead $a_{j-1,i^\prime}$
+% with $a_{j,i^\prime}$, for $i^\prime > j$. The idea is then the
+% same: there is a trichotomy, one case conclude our proof, the second
+% cannot happen and the third force us to continue. But we cannot
+% continue till the end, because if we find always equality, this
+% means that $H \not\prec G$, because they are indeed equal.
 
 % \begin{corollary}
 %   Given a graph $G$, the number of graphs isomorphic to $G$ that our
