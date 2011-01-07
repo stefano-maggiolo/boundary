@@ -330,7 +330,7 @@ We cannot conclude immediately that this procedure gives us all
 possible data up to permutations as in the case of a single
 vector. This is because the transformation that the whole matrix
 undergoes when a permutation is applied is more complicated: for the
-first three rows (the vectors $g,n,l$), it just permutes the columns,
+first three rows (the vectors $g$, $n$, $l$), it just permutes the columns,
 but for the remaining rows, it permutes both rows and columns. Indeed,
 to prove that the procedure of generating only ordered columns does
 not miss any stable graph is the content of the following section.
@@ -656,9 +656,9 @@ example.
 
 \section{Description of the ranges}\label{sec:ranges}
 
-In the previous section we have introduced the algorithm, by
+In Section~\ref{sec:description} we have introduced the algorithm, by
 describing the divisions. In this section we introduce accurate ranges
-for the possible values of $g, n, l$ and $a$.
+for the possible values of $g$, $n$, $l$ and $a$.
 
 We will deduce from the conditions of Definition~\ref{def:stable
   graph} some other necessary conditions that can be checked before
@@ -666,11 +666,10 @@ the graph is defined in its entirety. More precisely, every single
 datum is assigned trying all the possibilities within a range that
 depends upon the values of $G$ and $N$, and upon the values of the
 data that have already been filled. The conditions we describe in the
-following are not all the possible that can be enforced; we tried
-other possibilities, but heuristically the others we tried do not give
-any improvement.
+following are not the only ones possible; we tried other possibilities, 
+but heuristically the others we tried did not give any improvement.
 
-The order in which we assign the value of the data is $g$,$n$,$l$, and
+The order in which we assign the value of the data is $g$, $n$, $l$, and
 finally the upper triangular part of $a$ row after row.
 
 %\begin{notation}
@@ -686,9 +685,9 @@ finally the upper triangular part of $a$ row after row.
 
 \begin{notation}
   Suppose we are assigning the $i$-th value of one of the vectors
-  $g,n$ or $l$, or the $(i,j)$-th value of $a$. We define the
+  $g$, $n$ or $l$, or the $(i,j)$-th value of $a$. We define the
   following derived variables $e^{\MAX}$, $c$ and $p_1$ that depend
-  upon the values that have already been assigned to $g,n,l,a$.
+  upon the values that have already been assigned to $g$, $n$, $l$, $a$.
 
   We let $e^{\MAX}$ be the maximum number of edges that could be
   introduced in the subsequent iterations of the recursion, and $c$ be
@@ -701,7 +700,7 @@ finally the upper triangular part of $a$ row after row.
   other hand, $c$ starts to change its value only when the matrix $a$
   begins to be filled.
 
-  After the assignment of the $i$-th value, the derived values
+  \emph{After} the assignment of the $i$-th value, the derived values
   $e^{\MAX}$, $c$ and $p_1$ are then updated according to the
   assignment itself.
 \end{notation}
