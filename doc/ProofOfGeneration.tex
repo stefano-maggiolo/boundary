@@ -25,11 +25,10 @@
 \newtheorem{notation}[theorem]{Notation}
 
 
-\DeclareMathOperator{\bN}{\mathbb{N}}
 \DeclareMathOperator{\mult}{mult}
 \DeclareMathOperator{\MAX}{max}
-%\DeclareMathOperator{\min}{min}
 
+\newcommand{\bN}{\mathbb{N}}
 \newcommand{\graph}{\mathcal{G}}
 \newcommand{\abs}[1]{\left|#1\right|}
 \newcommand{\ubar}[1]{\underline{#1}}
@@ -468,7 +467,7 @@ Proposition~\ref{prop:main}.
   l_j$, and that for all $i^\prime < i$ not in $\{j-1,j\}$, we have
   $a_{i^\prime, j-1} = a_{i^\prime, j}$. Let $H \coloneqq
   \sigma_{j-1,j} G$; the vectors $g$, $n$, and $l$ (the first three
-  rows) coincide in $G$ and $H$;
+  rows) coincide in $G$ and $H$.
   % instead, to explain what changes in
   % $a$, let us distinguish two cases, depicted in Figure~\ref{fig:a}.
   \begin{itemize}
@@ -999,6 +998,15 @@ at \texttt{boundary}'s webpage,
 \href{http://people.sissa.it/~maggiolo/boundary/}
 {\texttt{http://people.sissa.it/\~{}maggiolo/boundary/}}.
 
+\section*{Acknowledgments}
+
+Both the authors want to acknowledge their host institutions,
+\textsc{sissa} and \textsc{kth}.  The second author was partly
+supported by the Wallenberg foundation. Both authors were partly
+supported by \textsc{prin} ``Geometria delle variet\`a algebriche e
+dei loro spazi di moduli'', by Istituto Nazionale di Alta Matematica.
+
+
 \begin{thebibliography}{2}
 
 \bibitem [BMS] {busonero}
@@ -1044,19 +1052,18 @@ at \texttt{boundary}'s webpage,
   \emph{Maximally symmetric stable curves II},
   \arXiv{math/0608799}.%v1
 
-\bibitem [SY] {smith}
-  G.~Smith and S.~Yang,
-  \emph{HodgeIntegral. Macaulay2 package for computing Hodge Integrals},
-  available by request from author \href{mailto:stpyang@math.kth.se}
-  {\texttt{stpyang@math.kth.se}}.
+\bibitem [Y1] {smith}
+  S.~Yang,
+  \emph{Intersection numbers on $\bar{M}_{g,n}$},
+  Journal of Software for Algebra and Geometry, {\bf 2} (2010) 1--5.
 
-\bibitem [Y1] {stephanie1}
+\bibitem [Y2] {stephanie1}
   S.~Yang,
   \emph{Maple program for computing integrals on $\overline{M}_{g,n}$},
   available by request from author \href{mailto:stpyang@math.kth.se}
   {\texttt{stpyang@math.kth.se}}.
 
-\bibitem [Y2] {stephanie2}
+\bibitem [Y3] {stephanie2}
   S.~Yang,
   \emph{Calculating intersection numbers on moduli spaces of pointed curves},
   \arXiv{0808.1974}.%v2
