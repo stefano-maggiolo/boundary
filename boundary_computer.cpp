@@ -251,18 +251,18 @@ BoundaryComputer::bt_g(int i)
       // condition of the form "we need at least ... to stabilize
       // ...", we mean:
 
-      // a. we split the set of edges in two subsets: K-1 connection 
-      //    edges and the remaining ones. The connection edges 
-      //    contribute to one stabilization for every vertex, plus 
-      //    K-2 stabilizations that we can choose how to distribute. 
-      //    The remaining $|E|-(K-1)$ edges give us 2 stabilization 
+      // a. we split the set of edges in two subsets: K-1 connection
+      //    edges and the remaining ones. The connection edges
+      //    contribute to one stabilization for every vertex, plus
+      //    K-2 stabilizations that we can choose how to distribute.
+      //    The remaining $|E|-(K-1)$ edges give us 2 stabilization
       //    each, hence the total number of stabilizations is:
       //    $2(|E|-(K-1)) + K-2 = 2|E|-K$.
 
       // b. hence, before beginning to assign non-loop edges, we
       //    consider a genus 0 curve stabilized when it has 2
       //    stabilization, because we know for sure that one more
-      //    edge will  be assigned there in order to connect the 
+      //    edge will  be assigned there in order to connect the
       //    vertex to the rest of the graph.
 
       // Consider: p1 genus 0 curves to stabilize, before deciding g_i.
@@ -285,7 +285,7 @@ BoundaryComputer::bt_g(int i)
           else
             graph.sum += n;
           // If we are assigning a genus in this vertex that is strictly
-          // larger than the genus of the previous vertex, we cannote 
+          // larger than the genus of the previous vertex, we cannot
           // exchange anymore components < i with components >= i, so we
           // put a division before the vertex i.
           if (n > start) graph.divisions |= 1 << i;
@@ -628,7 +628,7 @@ BoundaryComputer::bt_a(int i, int j)
             }
         }
     }
-  else // If we have already decided all the matrix, we check if the 
+  else // If we have already decided all the matrix, we check if the
        // graph is acceptable. In this case, we print it.
     {
       graph.total_edges = -graph.M;
