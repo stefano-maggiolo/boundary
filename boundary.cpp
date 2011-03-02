@@ -119,7 +119,7 @@ ParseCommandLine(int argc, char* argv[], int& g, int& n, int& codim, enum Printe
                     statistics = Full;
                   else if (argv[i+1][0] == 'T')
                     statistics = Terse;
-                  else if (argv[i+1][0] == 'S')
+                  else if (argv[i+1][0] == 'N')
                     statistics = No;
                   else
                     QuitWithUsage(argv[0]);
